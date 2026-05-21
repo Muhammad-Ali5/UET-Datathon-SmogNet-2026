@@ -1,0 +1,15 @@
+GORK_API_KEY = "your-groq-api-key-here"
+
+# Twilio WhatsApp credentials
+TWILIO_ACCOUNT_SID= "your-twilio-account-sid"
+TWILIO_AUTH_TOKEN= "your-twilio-auth-token"
+TWILIO_WHATSAPP_FROM= "+14155238886"
+
+# Optional backend configuration
+API_HOST=0.0.0.0
+API_PORT=5000
+ALERT_THRESHOLD=100
+
+# Model paths (optional, defaults to ml_models paths)
+#MODEL_PATH=../ml_models/best_smognet_model.pkl
+#LABEL_ENCODER_PATH=../ml_models/label_encoder.pkl

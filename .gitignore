@@ -1,0 +1,54 @@
+.env
+*.env
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+backend/test_twilio.py
+
+# IDE and Editor Settings
+.vscode/
+.cursor/
+.idea/
+.windsurfrules
+
+# Jetro and Agent Files
+.jetro/
+.agents/
+.mcp.json
+
+# Virtual Environments
+backend/env/
+venv/
+env/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+frontend/node_modules/
+
+# Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebooks (Untitled/Temporary)
+ml_models/Untitled*.ipynb
+**/*.ipynb_checkpoints/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Log Files
+*.log
+*.log.*
+
+# Temporary Files
+*.tmp
+*.temp
+.cache/

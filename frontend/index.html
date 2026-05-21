@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmogNet — Interactive ML Predictor & Simulator</title>
+    <link href="dist/output.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            background-color: #0A1220;
+            color: #e0e3e5;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+        .particles-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        main {
+            position: relative;
+            z-index: 10;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            background: #48f1f0;
+            border: 2px solid #0A1220;
+            border-radius: 9999px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            -webkit-appearance: none;
+            box-shadow: 0 0 10px rgba(72, 241, 240, 0.5);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            height: 6px;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+    <!-- Floating Particle Canvas Background -->
+    <canvas class="particles-overlay" id="particles-canvas"></canvas>
+
+    <!-- Header -->
+    <header class="bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 border-b border-white/10 shadow-lg relative w-full">
+        <div class="max-w-container-max mx-auto px-margin-desktop py-4 flex justify-between items-center w-full">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-primary rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary font-bold">cloud</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-primary bg-clip-text text-transparent tracking-tight leading-none">SmogNet</span>
+                    <span class="text-[9px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Predictive AI Systems</span>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-8">
+                <a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md font-label-md" href="index.html">Predictor Simulator</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="smognet_intelligence_dashboard.html">City Monitor</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="dashboard.html">Dashboard 🇵🇰</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md flex items-center gap-1.5" href="chatbot.html">
+                    <span class="material-symbols-outlined" style="font-size:16px">smart_toy</span>
+                    AI Assistant
+                </a>
+            </nav>
+
+            <div id="header-status" class="flex items-center gap-2 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/10">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                <span class="text-cyan-400 text-xs font-semibold">Model Service Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-container-max w-full mx-auto px-margin-desktop py-8 relative">
+        
+        <!-- Dashboard Welcome Context -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-headline-lg font-headline-lg text-on-surface">Interactive AQI Predictor & Analyzer</h1>
+                <p class="text-on-surface-variant text-body-md mt-1">Configure micro-pollutant ratios below to simulate atmospheric classifications and examine compliance limits.</p>
+            </div>
+        </div>
+
+        <!-- Preset Scenarios Panel -->
+        <section class="glass-card rounded-2xl p-5 mb-8 border border-white/5">
+            <h2 class="text-xs text-on-surface-variant uppercase font-semibold tracking-wider mb-3">Load Preset Atmospheric Scenarios</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <button onclick="loadScenario('lahore')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:border-red-500/50 hover:bg-red-500/5 transition-all text-center">
+                    <span class="material-symbols-outlined text-red-400 mb-1">agriculture</span>
+                    <span class="text-xs font-bold text-white">Lahore Smog Peak</span>
+                    <span class="text-[9px] text-red-300/60 mt-0.5">Crop Burning</span>
+                </button>
+                <button onclick="loadScenario('karachi')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all text-center">
+                    <span class="material-symbols-outlined text-orange-400 mb-1">directions_car</span>
+                    <span class="text-xs font-bold text-white">Karachi Traffic</span>
+                    <span class="text-[9px] text-orange-300/60 mt-0.5">Vehicular</span>
+                </button>
+                <button onclick="loadScenario('quetta')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:border-yellow-500/50 hover:bg-yellow-500/5 transition-all text-center">
+                    <span class="material-symbols-outlined text-yellow-400 mb-1">filter_hdr</span>
+                    <span class="text-xs font-bold text-white">Quetta Valley</span>
+                    <span class="text-[9px] text-yellow-300/60 mt-0.5">Dry Plains</span>
+                </button>
+                <button onclick="loadScenario('peshawar')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:border-amber-600/50 hover:bg-amber-600/5 transition-all text-center">
+                    <span class="material-symbols-outlined text-amber-500 mb-1">storm</span>
+                    <span class="text-xs font-bold text-white">Peshawar Dust Storm</span>
+                    <span class="text-[9px] text-amber-300/60 mt-0.5">Coarse Dust</span>
+                </button>
+                <button onclick="loadScenario('islamabad')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:border-green-500/50 hover:bg-green-500/5 transition-all text-center col-span-2 md:col-span-1">
+                    <span class="material-symbols-outlined text-green-400 mb-1">nature_people</span>
+                    <span class="text-xs font-bold text-white">Islamabad Valley</span>
+                    <span class="text-[9px] text-green-300/60 mt-0.5">Clean Air</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Predictor Grid Workspace -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+            
+            <!-- Left Workspace: Pollutant Configuration (7 Columns) -->
+            <div class="glass-card rounded-2xl p-6 lg:col-span-7 border border-white/5">
+                <h2 class="text-headline-md font-headline-md mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">tune</span>
+                    Atmospheric Parameter Sliders
+                </h2>
+
+                <form id="predictor-form" class="space-y-6">
+                    <!-- PM2.5 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="pm2_5-slider" class="flex items-center gap-2 text-label-md font-semibold text-on-surface">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                                PM2.5 <span class="text-xs text-on-surface-variant font-normal">(Fine Particulate Matter)</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="pm2_5-input" min="0" max="500" value="15" class="w-20 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                <span class="text-xs text-on-surface-variant font-semibold">µg/m³</span>
+                            </div>
+                        </div>
+                        <input type="range" id="pm2_5-slider" min="0" max="500" value="15" class="w-full">
+                    </div>
+
+                    <!-- PM10 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="pm10-slider" class="flex items-center gap-2 text-label-md font-semibold text-on-surface">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span>
+                                PM10 <span class="text-xs text-on-surface-variant font-normal">(Coarse Dust & Smoke)</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="pm10-input" min="0" max="600" value="30" class="w-20 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                <span class="text-xs text-on-surface-variant font-semibold">µg/m³</span>
+                            </div>
+                        </div>
+                        <input type="range" id="pm10-slider" min="0" max="600" value="30" class="w-full">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- NO -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="no-slider" class="text-label-md font-semibold text-on-surface">NO <span class="text-xs text-on-surface-variant font-normal">(Nitric Oxide)</span></label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="no-input" min="0" max="150" value="5" class="w-16 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                    <span class="text-[10px] text-on-surface-variant/70 font-semibold">µg/m³</span>
+                                </div>
+                            </div>
+                            <input type="range" id="no-slider" min="0" max="150" value="5" class="w-full">
+                        </div>
+
+                        <!-- NO2 -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="no2-slider" class="text-label-md font-semibold text-on-surface">NO2 <span class="text-xs text-on-surface-variant font-normal">(Nitrogen Dioxide)</span></label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="no2-input" min="0" max="150" value="12" class="w-16 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                    <span class="text-[10px] text-on-surface-variant/70 font-semibold">µg/m³</span>
+                                </div>
+                            </div>
+                            <input type="range" id="no2-slider" min="0" max="150" value="12" class="w-full">
+                        </div>
+
+                        <!-- SO2 -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="so2-slider" class="text-label-md font-semibold text-on-surface">SO2 <span class="text-xs text-on-surface-variant font-normal">(Sulfur Dioxide)</span></label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="so2-input" min="0" max="100" value="3" class="w-16 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                    <span class="text-[10px] text-on-surface-variant/70 font-semibold">µg/m³</span>
+                                </div>
+                            </div>
+                            <input type="range" id="so2-slider" min="0" max="100" value="3" class="w-full">
+                        </div>
+
+                        <!-- NH3 -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="nh3-slider" class="text-label-md font-semibold text-on-surface">NH3 <span class="text-xs text-on-surface-variant font-normal">(Ammonia Gas)</span></label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="nh3-input" min="0" max="120" value="4" class="w-16 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                    <span class="text-[10px] text-on-surface-variant/70 font-semibold">µg/m³</span>
+                                </div>
+                            </div>
+                            <input type="range" id="nh3-slider" min="0" max="120" value="4" class="w-full">
+                        </div>
+
+                        <!-- CO -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="co-slider" class="text-label-md font-semibold text-on-surface">CO <span class="text-xs text-on-surface-variant font-normal">(Carbon Monoxide)</span></label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="co-input" min="0" max="5000" value="450" class="w-16 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                    <span class="text-[10px] text-on-surface-variant/70 font-semibold">µg/m³</span>
+                                </div>
+                            </div>
+                            <input type="range" id="co-slider" min="0" max="5000" value="450" class="w-full">
+                        </div>
+
+                        <!-- O3 -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="o3-slider" class="text-label-md font-semibold text-on-surface">O3 <span class="text-xs text-on-surface-variant font-normal">(Ground Ozone)</span></label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="o3-input" min="0" max="300" value="50" class="w-16 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-right font-bold text-sm focus:outline-none focus:border-primary">
+                                    <span class="text-[10px] text-on-surface-variant/70 font-semibold">µg/m³</span>
+                                </div>
+                            </div>
+                            <input type="range" id="o3-slider" min="0" max="300" value="50" class="w-full">
+                        </div>
+                    </div>
+
+                    <!-- Done button to trigger warning dispatch -->
+                    <div class="pt-4">
+                        <button 
+                            type="button" 
+                            id="sliders-done-btn"
+                            class="w-full bg-primary text-on-primary font-bold py-3 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-primary/25"
+                        >
+                            <span class="material-symbols-outlined text-sm">check_circle</span> Done & Broadcast Alert
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Workspace: Prediction & Graphical Charts (5 Columns) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Main Prediction Indicator Card -->
+                <div class="glass-card rounded-2xl p-6 border border-white/5 relative overflow-hidden transition-all duration-300">
+                    <div class="absolute top-0 right-0 p-4 opacity-5">
+                        <span class="material-symbols-outlined text-[100px]">neurology</span>
+                    </div>
+
+                    <div class="flex flex-col items-center text-center relative z-10">
+                        <p class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold mb-4">Calculated Quality & Prediction</p>
+                        
+                        <!-- SVG Radial Progress Dial -->
+                        <div class="relative w-36 h-36 flex items-center justify-center mb-4">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="72" cy="72" r="60" stroke="rgba(255,255,255,0.05)" stroke-width="12" fill="transparent" />
+                                <circle id="aqi-gauge-circle" cx="72" cy="72" r="60" stroke="#10b981" stroke-width="12" fill="transparent"
+                                        stroke-dasharray="377" stroke-dashoffset="377" stroke-linecap="round" class="transition-all duration-500 ease-out" />
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span id="aqi-value" class="text-4xl font-bold tracking-tight text-white leading-none">1</span>
+                                <span class="text-[9px] text-on-surface-variant uppercase tracking-wider font-semibold mt-1">AQI Level</span>
+                            </div>
+                        </div>
+
+                        <div id="aqi-status-badge" class="px-3.5 py-1 rounded-full text-xs font-bold border bg-green-500/20 border-green-500/30 text-green-400 mb-6">
+                            Good
+                        </div>
+
+                        <!-- Divider line -->
+                        <div class="w-full h-[1px] bg-white/5 mb-6"></div>
+
+                        <!-- Source details -->
+                        <div class="w-full text-left space-y-4">
+                            <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-400/10 text-cyan-400">
+                                    <span id="predicted-source-icon" class="material-symbols-outlined">nature_people</span>
+                                </div>
+                                <div class="flex-grow">
+                                    <p class="text-[10px] text-on-surface-variant uppercase font-semibold">Predicted Pollution Source</p>
+                                    <h3 id="predicted-source-name" class="text-md font-bold text-white">Clean / Mixed Valley</h3>
+                                </div>
+                                <div id="anomaly-badge" class="px-2 py-0.5 rounded text-[10px] font-bold border border-green-500/30 text-green-400 bg-green-500/5">
+                                    Normal
+                                </div>
+                            </div>
+                            
+                            <p id="prediction-advice" class="text-xs text-on-surface-variant/90 leading-relaxed italic">
+                                Air quality is clear and satisfactory. Safe for all outdoor activities.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphical Analytics Card -->
+                <div class="glass-card rounded-2xl p-6 border border-white/5">
+                    <h2 class="text-label-md font-headline-md mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">analytics</span>
+                        WHO Daily Compliance Limits
+                    </h2>
+                    
+                    <div id="compliance-chart-container" class="space-y-4">
+                        <!-- Chart rows are rendered dynamically by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Broadcast Alert Dispatch Integration -->
+                <div id="dispatch-integration-panel" class="glass-card rounded-2xl p-6 border border-white/5 space-y-4">
+                    <h2 class="text-label-md font-headline-md flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">campaign</span>
+                        Simulated Alert Dispatcher
+                    </h2>
+                    <p class="text-xs text-on-surface-variant">Broadcast simulated alerts via SMTP Email integration.</p>
+
+                    <!-- Auto-Alert Toggle Switch -->
+                    <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-white">Auto-Broadcast on Spike</span>
+                            <span class="text-[9px] text-on-surface-variant">Sends warning to numbers in test_twilio.py</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="auto-alert-toggle" class="sr-only peer">
+                            <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant/60">
+                            <span class="material-symbols-outlined text-sm">call</span>
+                        </span>
+                        <input 
+                            type="tel" 
+                            id="twilio-recipient" 
+                            placeholder="+923001234567"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white placeholder-on-surface-variant/40 focus:outline-none focus:border-primary text-xs focus:ring-0"
+                        >
+                    </div>
+
+                    <button 
+                        type="button" 
+                        onclick="sendSimulatedAlert()"
+                        class="w-full bg-primary text-on-primary font-bold py-2 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 text-xs shadow-md shadow-primary/20"
+                    >
+                        <span class="material-symbols-outlined text-sm">forum</span> Broadcast Test Alert
+                    </button>
+                    <div id="dispatch-status" class="text-[11px] text-center font-semibold py-1 rounded hidden transition-all"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="auto-alert-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="glass-card border-red-500/30 bg-red-950/80 px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3">
+            <span class="material-symbols-outlined text-red-400 animate-bounce">campaign</span>
+            <div>
+                <p class="text-xs font-bold text-white">Auto-Alert Dispatched!</p>
+                <p class="text-[10px] text-red-300/80">Spike detected. Warning forwarded to 3 stored recipients.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container-lowest border-t border-white/5 w-full mt-auto relative z-10">
+        <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-8 w-full max-w-container-max mx-auto gap-4">
+            <div class="flex flex-col items-center md:items-start gap-2">
+                <span class="text-headline-md font-headline-md font-bold text-on-surface">SmogNet</span>
+                <p class="text-on-surface-variant text-label-sm font-label-sm">© 2026 SmogNet Predictive Systems. Dedicated Analytics Hub.</p>
+                <p class="text-primary/60 text-[10px] font-bold uppercase tracking-widest">SmogNet Datathon 2026 | UET Mardan</p>
+            </div>
+            <div class="flex gap-8">
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="index.html">Simulation Center</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="smognet_intelligence_dashboard.html">Monitor Map</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Canvas Floating Particles Script -->
+    <script>
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.15;
+                this.vy = (Math.random() - 0.5) * 0.15;
+                this.radius = Math.random() * 1.5;
+                this.opacity = Math.random() * 0.35;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(72, 241, 240, ${this.opacity})`;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 70; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+
+    <script>
+        const getApiUrl = (endpoint) => {
+            if (window.location.protocol === 'file:') {
+                return `http://127.0.0.1:5000${endpoint}`;
+            }
+            return endpoint;
+        };
+
+        let currentScenarioName = "Lahore";
+        let lastAutoBroadcastTime = 0;
+        const AUTO_BROADCAST_COOLDOWN_MS = 10000; // 10 seconds cooldown
+
+        let storedRecipients = ["kamgarhossein@gmail.com"];
+        async function fetchRecipients() {
+            try {
+                const res = await fetch(getApiUrl('/api/alert/recipients'));
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.recipients && data.recipients.length > 0) {
+                        storedRecipients = data.recipients;
+                        console.log("Loaded dynamic recipients:", storedRecipients);
+                        // Prefill manual input with first email
+                        const input = document.getElementById('twilio-recipient');
+                        if (input && !input.value) {
+                            input.value = storedRecipients[0];
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Failed to load recipients from API, using defaults:", err);
+            }
+        }
+        window.addEventListener('DOMContentLoaded', fetchRecipients);
+
+        const scenarioPresets = {
+            lahore: { pm2_5: 428, pm10: 510, no: 1, no2: 53, so2: 5, nh3: 4, co: 3151, o3: 5 },
+            karachi: { pm2_5: 125, pm10: 178, no: 0, no2: 27, so2: 19, nh3: 18, co: 1415, o3: 69 },
+            islamabad: { pm2_5: 329, pm10: 388, no: 26, no2: 162, so2: 23, nh3: 62, co: 4913, o3: 0 },
+            peshawar: { pm2_5: 443, pm10: 511, no: 0, no2: 173, so2: 23, nh3: 67, co: 6462, o3: 7 },
+            quetta: { pm2_5: 63, pm10: 86, no: 0, no2: 25, so2: 10, nh3: 15, co: 921, o3: 64 }
+        };
+
+        const whoLimits = {
+            pm2_5: 15,    // WHO 24h limit: 15 µg/m³
+            pm10: 45,     // WHO 24h limit: 45 µg/m³
+            no2: 25,      // WHO 24h limit: 25 µg/m³
+            so2: 40,      // WHO 24h limit: 40 µg/m³
+            o3: 100,      // WHO 8h limit: 100 µg/m³
+            co: 4000      // WHO 24h limit: 4000 µg/m³ (4 mg/m³)
+        };
+
+        const sourceMetadata = {
+            "Crop Burning": {
+                icon: "agriculture",
+                color: "text-red-400",
+                bgClass: "bg-red-500/10",
+                borderClass: "border-red-500/20",
+                description: "Crop residue burning detected. Characterized by severe Ammoniacal (NH3) gas spikes and high Carbon Monoxide (CO). Common in harvesting seasons.",
+                prevention: "Seal windows immediately. Use HEPA purifiers. Do not burn any trash or wood locally."
+            },
+            "Vehicular": {
+                icon: "directions_car",
+                color: "text-orange-400",
+                bgClass: "bg-orange-500/10",
+                borderClass: "border-orange-500/20",
+                description: "High density automobile combustion exhaust. Characterized by elevated Nitric Oxide (NO) and Nitrogen Dioxide (NO2) gases. Common in congested urban traffic.",
+                prevention: "Avoid traveling during rush hour. Close car vents if driving. Avoid walking or exercising near main roads."
+            },
+            "Industrial": {
+                icon: "factory",
+                color: "text-yellow-400",
+                bgClass: "bg-yellow-500/10",
+                borderClass: "border-yellow-500/20",
+                description: "Point-source manufacturing or furnace smoke. Characterized by elevated Sulfur Dioxide (SO2) levels and dense particulates. Common in coal/oil burning hubs.",
+                prevention: "Wear N95 masks outdoors. Keep vulnerable children and elderly indoors. Avoid downwind industrial zones."
+            },
+            "Dust Storm": {
+                icon: "storm",
+                color: "text-amber-500",
+                bgClass: "bg-amber-600/10",
+                borderClass: "border-amber-600/20",
+                description: "Coarse environmental dust suspension. Characterized by coarse particulates (PM10) scaling far higher than fine particulates (PM2.5). Common in arid plains.",
+                prevention: "Stay indoors. Wear wrap-around glasses outdoors to protect eyes. Use humidifiers indoors."
+            },
+            "Mixed": {
+                icon: "grain",
+                color: "text-cyan-400",
+                bgClass: "bg-cyan-500/10",
+                borderClass: "border-cyan-500/20",
+                description: "Mixed atmospheric pollution profile. Normal background urban dispersion without a singular predominant chemical source signature.",
+                prevention: "Reduce outdoor exertion. Wear a mask if you must go outside."
+            }
+        };
+
+        const locationPrevention = {
+            "Lahore": "Lahore Advisory: Minimize travel to the inner city and Mall Road areas.",
+            "Karachi": "Karachi Advisory: Avoid coastal breezes which may carry heavy port and industrial emissions.",
+            "Islamabad": "Islamabad Advisory: Avoid Margalla hills hiking trails due to trapped low-altitude smog.",
+            "Peshawar": "Peshawar Advisory: Avoid the Ring Road and major construction zones.",
+            "Quetta": "Quetta Advisory: Keep doors sealed against valley dust winds."
+        };
+
+        const aqiMeta = {
+            1: { name: "Good", color: "#10b981", bgClass: "bg-green-500/20", borderClass: "border-green-500/30", textClass: "text-green-400" },
+            2: { name: "Fair", color: "#84cc16", bgClass: "bg-lime-500/20", borderClass: "border-lime-500/30", textClass: "text-lime-400" },
+            3: { name: "Moderate", color: "#f59e0b", bgClass: "bg-yellow-500/20", borderClass: "border-yellow-500/30", textClass: "text-yellow-400" },
+            4: { name: "Poor", color: "#f97316", bgClass: "bg-orange-500/20", borderClass: "border-orange-500/30", textClass: "text-orange-400" },
+            5: { name: "Very Poor", color: "#e11d48", bgClass: "bg-rose-500/20", borderClass: "border-rose-500/30", textClass: "text-rose-400" }
+        };
+
+        // Pollutant form listeners
+        const formFields = ['pm2_5', 'pm10', 'no', 'no2', 'so2', 'nh3', 'co', 'o3'];
+
+        function initPredictor() {
+            formFields.forEach(field => {
+                const slider = document.getElementById(`${field}-slider`);
+                const input = document.getElementById(`${field}-input`);
+                
+                if (slider && input) {
+                    // Sync slider -> input
+                    slider.addEventListener('input', (e) => {
+                        input.value = e.target.value;
+                        currentScenarioName = "Custom Profile";
+                        triggerPrediction();
+                    });
+                    
+                    // Sync input -> slider
+                    input.addEventListener('change', (e) => {
+                        let val = parseInt(e.target.value) || 0;
+                        const min = parseInt(slider.min);
+                        const max = parseInt(slider.max);
+                        if (val < min) val = min;
+                        if (val > max) val = max;
+                        input.value = val;
+                        slider.value = val;
+                        currentScenarioName = "Custom Profile";
+                        triggerPrediction();
+                    });
+                }
+            });
+
+            // Parse URL redirection values
+            parseUrlParameters();
+        }
+
+        function loadScenario(scenarioName) {
+            const data = scenarioPresets[scenarioName];
+            if (!data) return;
+
+            currentScenarioName = scenarioName.charAt(0).toUpperCase() + scenarioName.slice(1);
+            localStorage.setItem('smognet_city', scenarioName.toLowerCase());
+
+            formFields.forEach(field => {
+                const slider = document.getElementById(`${field}-slider`);
+                const input = document.getElementById(`${field}-input`);
+                if (slider && input) {
+                    slider.value = data[field];
+                    input.value = data[field];
+                }
+            });
+
+            triggerPrediction();
+        }
+
+        // Get values from form inputs
+        function getFormValues() {
+            const values = {};
+            formFields.forEach(field => {
+                const slider = document.getElementById(`${field}-slider`);
+                values[field] = parseFloat(slider.value) || 0;
+            });
+            return values;
+        }
+
+        // Calculate OpenWeatherMap AQI standard locally
+        function calculateLocalAqi(v) {
+            let aqiPm25 = 1;
+            if (v.pm2_5 > 75) aqiPm25 = 5;
+            else if (v.pm2_5 > 50) aqiPm25 = 4;
+            else if (v.pm2_5 > 25) aqiPm25 = 3;
+            else if (v.pm2_5 > 10) aqiPm25 = 2;
+
+            let aqiPm10 = 1;
+            if (v.pm10 > 200) aqiPm10 = 5;
+            else if (v.pm10 > 100) aqiPm10 = 4;
+            else if (v.pm10 > 50) aqiPm10 = 3;
+            else if (v.pm10 > 20) aqiPm10 = 2;
+
+            let aqiNo2 = 1;
+            if (v.no2 > 200) aqiNo2 = 5;
+            else if (v.no2 > 150) aqiNo2 = 4;
+            else if (v.no2 > 70) aqiNo2 = 3;
+            else if (v.no2 > 40) aqiNo2 = 2;
+
+            let aqiO3 = 1;
+            if (v.o3 > 180) aqiO3 = 5;
+            else if (v.o3 > 140) aqiO3 = 4;
+            else if (v.o3 > 100) aqiO3 = 3;
+            else if (v.o3 > 60) aqiO3 = 2;
+
+            let aqiSo2 = 1;
+            if (v.so2 > 350) aqiSo2 = 5;
+            else if (v.so2 > 250) aqiSo2 = 4;
+            else if (v.so2 > 80) aqiSo2 = 3;
+            else if (v.so2 > 20) aqiSo2 = 2;
+
+            return Math.max(aqiPm25, aqiPm10, aqiNo2, aqiO3, aqiSo2);
+        }
+
+        // JavaScript Fallback Rule Classifier matching model training logic
+        function predictSourceLocally(v) {
+            if (v.nh3 > 80 && v.co > 20) return "Crop Burning";
+            if (v.no > 50 && v.no2 > 50) return "Vehicular";
+            if (v.so2 > 40) return "Industrial";
+            if (v.pm10 > v.pm2_5 * 2) return "Dust Storm";
+            return "Mixed";
+        }
+
+        let debounceTimeout = null;
+        function triggerPrediction() {
+            clearTimeout(debounceTimeout);
+            
+            // Re-render local charts and AQI immediately for immediate responsiveness
+            renderLocalAnalytics();
+            
+            debounceTimeout = setTimeout(() => {
+                runMlPrediction();
+            }, 150);
+        }
+
+        async function runMlPrediction() {
+            const v = getFormValues();
+            
+            // Map form variables to ML feature payload
+            const payload = {
+                components_pm2_5: v.pm2_5,
+                components_pm10: v.pm10,
+                components_no: v.no,
+                components_no2: v.no2,
+                components_so2: v.so2,
+                components_nh3: v.nh3,
+                components_co: v.co,
+                components_o3: v.o3
+            };
+
+            const localAqi = calculateLocalAqi(v);
+            let predictedSource = "";
+            let anomalyStatus = localAqi >= 4 ? "Spike" : "Normal";
+
+            try {
+                const response = await fetch(getApiUrl('/api/predict'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.predictions && result.predictions.length > 0) {
+                    const predIndex = result.predictions[0];
+                    const classes = ['Crop Burning', 'Dust Storm', 'Industrial', 'Mixed', 'Vehicular'];
+                    predictedSource = classes[predIndex] || "Mixed";
+                } else {
+                    throw new Error("Invalid API prediction output");
+                }
+            } catch (err) {
+                // Falling back gracefully to exact JS local rule-based classifier matching dataset labels
+                predictedSource = predictSourceLocally(v);
+            }
+
+            updatePredictionUI(localAqi, predictedSource, anomalyStatus);
+        }
+
+        function updatePredictionUI(aqi, source, anomaly) {
+            // Update AQI values and circular dial gauge
+            document.getElementById('aqi-value').textContent = aqi;
+            
+            const meta = aqiMeta[aqi];
+            const badge = document.getElementById('aqi-status-badge');
+            badge.textContent = meta.name;
+            badge.className = `px-3.5 py-1 rounded-full text-xs font-bold border ${meta.bgClass} ${meta.borderClass} ${meta.textClass}`;
+            
+            const circle = document.getElementById('aqi-gauge-circle');
+            circle.setAttribute('stroke', meta.color);
+            // Circle radius is 60, circumference is 2 * pi * 60 = 377
+            const offset = 377 - (aqi / 5) * 377;
+            circle.style.strokeDashoffset = offset;
+
+            // Update Source Info panel
+            const srcMeta = sourceMetadata[source] || sourceMetadata["Mixed"];
+            document.getElementById('predicted-source-icon').textContent = srcMeta.icon;
+            document.getElementById('predicted-source-name').textContent = source;
+            document.getElementById('prediction-advice').textContent = srcMeta.description;
+            
+            const iconWrap = document.getElementById('predicted-source-icon').parentElement;
+            iconWrap.className = `w-10 h-10 rounded-lg flex items-center justify-center ${srcMeta.bgClass} ${srcMeta.color}`;
+            iconWrap.parentElement.className = `flex items-center gap-3 p-3 rounded-xl border ${srcMeta.bgClass} ${srcMeta.borderClass}`;
+
+            // Anomaly state
+            const anomalyEl = document.getElementById('anomaly-badge');
+            anomalyEl.textContent = anomaly;
+            if (anomaly === "Spike") {
+                anomalyEl.className = "px-2 py-0.5 rounded text-[10px] font-bold border border-red-500/30 text-red-400 bg-red-500/5 animate-pulse";
+            } else {
+                anomalyEl.className = "px-2 py-0.5 rounded text-[10px] font-bold border border-green-500/30 text-green-400 bg-green-500/5";
+            }
+
+            // Prefill twilio alerts text
+            const adviceText = `SmogNet AI Alert: Simulated AQI is ${aqi} (${meta.name}). Predicted pollution source: ${source}. Status: ${anomaly === "Spike" ? "Atmospheric anomaly spike detected!" : "Atmospheric levels normal."} Take safety precautions.`;
+            document.getElementById('prediction-advice').textContent = srcMeta.description + ` Health Advisory: ` + (anomaly === "Spike" ? "Spike alert! Sensitive individuals should limit outdoors. Mask wear recommended." : "Healthy conditions. Safe to venture outdoors.");
+
+            // Trigger Automatic Anomaly Warning forwarding if checked
+            // Disabled: SMS/WhatsApp is now shared manually after hitting the DONE button.
+            // if (anomaly === "Spike") {
+            //     triggerAutoBroadcast(aqi, source, currentScenarioName);
+            // }
+        }
+
+        function triggerAutoBroadcast(aqi, source, cityName) {
+            const autoAlertToggle = document.getElementById('auto-alert-toggle');
+            if (!autoAlertToggle || !autoAlertToggle.checked) return;
+
+            const now = Date.now();
+            if (now - lastAutoBroadcastTime < AUTO_BROADCAST_COOLDOWN_MS) {
+                return; // Cooldown is active
+            }
+            lastAutoBroadcastTime = now;
+
+            const srcMeta = sourceMetadata[source] || sourceMetadata["Mixed"];
+            const locPrev = locationPrevention[cityName] || "";
+            const alertMsg = `🚨 EMERGENCY SMOGNET WARNING: ${cityName} 🚨\n\n` +
+                             `⚠️ Simulated AQI: ${aqi} (${aqiMeta[aqi].name})\n` +
+                             `🔍 Predicted Source: ${source}\n` +
+                             `📝 Reason: ${srcMeta.description}\n\n` +
+                             `🛡️ PREVENTION GUIDELINES 🛡️\n` +
+                             `✅ ${srcMeta.prevention}\n` +
+                             (locPrev ? `📍 ${locPrev}\n\n` : `\n`) +
+                             `Please stay safe and avoid respiratory exposure!`;
+            const recipients = storedRecipients;
+            
+            // Create dispatch log
+            const newLog = {
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                city: `${cityName} (Simulated)`,
+                source: source,
+                recipients: `${recipients.length} Stored Numbers`,
+                channel: "WhatsApp",
+                status: "Delivered"
+            };
+
+            // Save to localStorage
+            const customAlerts = JSON.parse(localStorage.getItem('smognet_custom_alerts') || '[]');
+            customAlerts.unshift(newLog);
+            if (customAlerts.length > 15) customAlerts.pop();
+            localStorage.setItem('smognet_custom_alerts', JSON.stringify(customAlerts));
+
+            // Call alert endpoint in background for all three recipients
+            recipients.forEach(async (num) => {
+                try {
+                    await fetch(getApiUrl('/api/alert'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            recipient: num,
+                            message: alertMsg,
+                            channel: 'whatsapp'
+                        })
+                    });
+                } catch (err) {
+                    // Ignore offline sandbox errors
+                }
+            });
+
+            // Show dynamic Toast
+            showAutoAlertToast(aqi, source);
+        }
+
+        function showAutoAlertToast(aqi, source) {
+            const toast = document.getElementById('auto-alert-toast');
+            if (!toast) return;
+            toast.querySelector('p:last-child').textContent = `Spike detected (${source}). Forwarded to 3 stored recipients.`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 4000);
+        }
+
+        // Render graphical WHO comparison bars
+        function renderLocalAnalytics() {
+            const v = getFormValues();
+            const container = document.getElementById('compliance-chart-container');
+            container.innerHTML = '';
+
+            const monitoredPollutants = [
+                { id: 'pm2_5', name: 'PM2.5 (Fine)', value: v.pm2_5 },
+                { id: 'pm10', name: 'PM10 (Coarse)', value: v.pm10 },
+                { id: 'no2', name: 'NO2 (Nitrogen Oxide)', value: v.no2 },
+                { id: 'so2', name: 'SO2 (Sulfur Oxide)', value: v.so2 },
+                { id: 'o3', name: 'O3 (Ground Ozone)', value: v.o3 },
+                { id: 'co', name: 'CO (Carbon Monoxide)', value: v.co }
+            ];
+
+            monitoredPollutants.forEach(p => {
+                const limit = whoLimits[p.id];
+                const ratio = p.value / limit;
+                
+                // Cap progress percentage representation at 100% for aesthetic bar container width
+                const barWidth = Math.min(100, ratio * 100);
+                
+                let barColor = "bg-primary";
+                let badgeColor = "text-primary/70";
+                
+                if (ratio > 3) {
+                    barColor = "bg-rose-500 shadow-md shadow-rose-500/20";
+                    badgeColor = "text-rose-400 bg-rose-500/10 border border-rose-500/20";
+                } else if (ratio > 1) {
+                    barColor = "bg-orange-400 shadow-md shadow-orange-400/20";
+                    badgeColor = "text-orange-400 bg-orange-500/10 border border-orange-500/20";
+                } else {
+                    barColor = "bg-emerald-500";
+                    badgeColor = "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20";
+                }
+
+                const item = document.createElement('div');
+                item.className = "space-y-1.5";
+                item.innerHTML = `
+                    <div class="flex justify-between items-center text-xs font-semibold">
+                        <span class="text-on-surface-variant">${p.name}</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-white">${p.value}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${badgeColor}">
+                                ${ratio > 1 ? `${ratio.toFixed(1)}x WHO` : "Compliant"}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="w-full h-2.5 bg-white/5 rounded-full relative overflow-hidden">
+                        <!-- Dynamic bar overlay -->
+                        <div class="h-full rounded-full ${barColor} transition-all duration-300 ease-out" style="width: ${barWidth}%"></div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Parse URL parameters (e.g. from Dashboard click redirection)
+        function parseUrlParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const city = params.get('city');
+
+            if (city) {
+                // Query local standard scenario profile if redirected for city simulation
+                if (scenarioPresets[city.toLowerCase()]) {
+                    loadScenario(city.toLowerCase());
+                    return;
+                }
+            }
+            
+            // Fallback to local storage or Lahore
+            const savedCity = localStorage.getItem('smognet_city');
+            if (savedCity && scenarioPresets[savedCity.toLowerCase()]) {
+                loadScenario(savedCity.toLowerCase());
+            } else {
+                loadScenario('lahore');
+            }
+        }
+
+        // Send simulated emergency alert via twilio
+        async function sendSimulatedAlert() {
+            const recipient = document.getElementById('twilio-recipient').value.trim();
+            const aqi = document.getElementById('aqi-value').textContent;
+            const source = document.getElementById('predicted-source-name').textContent;
+            const meta = aqiMeta[aqi];
+            
+            if (!recipient) {
+                showDispatchStatus("Please enter a valid phone number", "error");
+                return;
+            }
+
+            const srcMeta = sourceMetadata[source] || sourceMetadata["Mixed"];
+            const locPrev = locationPrevention[currentScenarioName] || "";
+            const alertMsg = `🚨 EMERGENCY SMOGNET WARNING: ${currentScenarioName} 🚨\n\n` +
+                             `⚠️ Simulated AQI: ${aqi} (${meta.name})\n` +
+                             `🔍 Predicted Source: ${source}\n` +
+                             `📝 Reason: ${srcMeta.description}\n\n` +
+                             `🛡️ PREVENTION GUIDELINES 🛡️\n` +
+                             `✅ ${srcMeta.prevention}\n` +
+                             (locPrev ? `📍 ${locPrev}\n\n` : `\n`) +
+                             `Please stay safe and avoid respiratory exposure!`;
+
+            const btn = document.querySelector('#dispatch-integration-panel button');
+            const origHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `Discharging...`;
+
+            try {
+                const response = await fetch(getApiUrl('/api/alert'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipient: recipient,
+                        message: alertMsg,
+                        channel: 'whatsapp'
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.sent) {
+                    showDispatchStatus("✅ Email Alert sent successfully!", "success");
+                } else {
+                    const err = result.error || result.reason || "Dispatch error";
+                    if (err.toLowerCase().includes('daily limit') || err.toLowerCase().includes('exceeded')) {
+                        showDispatchStatus("⚠️ Twilio daily limit reached. Upgrade Twilio or wait till midnight.", "error");
+                    } else if (err.toLowerCase().includes('opt')) {
+                        showDispatchStatus("⚠️ " + (data.error || "Email failed"), "error");
+                    } else {
+                        showDispatchStatus(`❌ ${err}`, "error");
+                    }
+                }
+            } catch (err) {
+                showDispatchStatus("❌ Cannot reach server. Is Flask running?", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHTML;
+            }
+        }
+
+        function showDispatchStatus(text, type) {
+            const el = document.getElementById('dispatch-status');
+            el.classList.remove('hidden');
+            el.textContent = text;
+
+            if (type === 'success') {
+                el.className = "text-[11px] text-center font-semibold py-1 rounded bg-green-500/10 border border-green-500/20 text-green-400 mt-2 block";
+            } else {
+                el.className = "text-[11px] text-center font-semibold py-1 rounded bg-red-500/10 border border-red-500/20 text-red-400 mt-2 block";
+            }
+
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showToast(message, type = "success") {
+            const container = document.body;
+            const toastId = 'dynamic-toast-' + Date.now();
+            
+            const toastHTML = `
+                <div id="${toastId}" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+                    <div class="glass-card ${type === 'success' ? 'border-green-500/30 bg-green-950/80' : 'border-red-500/30 bg-red-950/80'} px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3">
+                        <span class="material-symbols-outlined ${type === 'success' ? 'text-green-400' : 'text-red-400'} animate-bounce">
+                            ${type === 'success' ? 'check_circle' : 'warning'}
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold text-white">${type === 'success' ? 'Success!' : 'Alert'}</p>
+                            <p class="text-[10px] ${type === 'success' ? 'text-green-300/80' : 'text-red-300/80'}">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const div = document.createElement('div');
+            div.innerHTML = toastHTML.trim();
+            const toastElement = div.firstChild;
+            container.appendChild(toastElement);
+            
+            setTimeout(() => {
+                toastElement.classList.remove('translate-y-20', 'opacity-0');
+                toastElement.classList.add('translate-y-0', 'opacity-100');
+            }, 50);
+            
+            setTimeout(() => {
+                toastElement.classList.remove('translate-y-0', 'opacity-100');
+                toastElement.classList.add('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toastElement.remove();
+                }, 300);
+            }, 4000);
+        }
+
+        async function forceDoneBroadcast() {
+            // Get current slider values
+            const v = getFormValues();
+            const aqi = calculateLocalAqi(v);
+            let predictedSource = predictSourceLocally(v);
+            
+            const payload = {
+                components_pm2_5: v.pm2_5,
+                components_pm10: v.pm10,
+                components_no: v.no,
+                components_no2: v.no2,
+                components_so2: v.so2,
+                components_nh3: v.nh3,
+                components_co: v.co,
+                components_o3: v.o3
+            };
+
+            const btn = document.getElementById('sliders-done-btn');
+            const origHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Broadcasting...`;
+
+            try {
+                const response = await fetch(getApiUrl('/api/predict'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                if (response.ok && result.predictions && result.predictions.length > 0) {
+                    const predIndex = result.predictions[0];
+                    const classes = ['Crop Burning', 'Dust Storm', 'Industrial', 'Mixed', 'Vehicular'];
+                    predictedSource = classes[predIndex] || "Mixed";
+                }
+            } catch (err) {
+                console.warn("Predict API fallback during manual done trigger:", err);
+            }
+
+            const srcMeta = sourceMetadata[predictedSource] || sourceMetadata["Mixed"];
+            const locPrev = locationPrevention[currentScenarioName] || "";
+            const alertMsg = `🚨 EMERGENCY SMOGNET WARNING: ${currentScenarioName} 🚨\n\n` +
+                             `⚠️ Simulated AQI: ${aqi} (${aqiMeta[aqi].name})\n` +
+                             `🔍 Predicted Source: ${predictedSource}\n` +
+                             `📝 Reason: ${srcMeta.description}\n\n` +
+                             `🛡️ PREVENTION GUIDELINES 🛡️\n` +
+                             `✅ ${srcMeta.prevention}\n` +
+                             (locPrev ? `📍 ${locPrev}\n\n` : `\n`) +
+                             `Please stay safe and avoid respiratory exposure!`;
+            const recipients = storedRecipients;
+            
+            const newLog = {
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                city: `${currentScenarioName} (Manual Done)`,
+                source: predictedSource,
+                recipients: `${recipients.length} Stored Numbers`,
+                channel: "WhatsApp",
+                status: "Delivered"
+            };
+
+            const customAlerts = JSON.parse(localStorage.getItem('smognet_custom_alerts') || '[]');
+            customAlerts.unshift(newLog);
+            if (customAlerts.length > 15) customAlerts.pop();
+            localStorage.setItem('smognet_custom_alerts', JSON.stringify(customAlerts));
+
+            let successCount = 0;
+            let lastError = null;
+            let promises = recipients.map(async (num) => {
+                try {
+                    const res = await fetch(getApiUrl('/api/alert'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            recipient: num,
+                            message: alertMsg,
+                            channel: 'whatsapp'
+                        })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (data.sent) {
+                        successCount++;
+                    } else {
+                        lastError = data.error || 'Unknown error';
+                    }
+                } catch (e) {
+                    lastError = 'Cannot reach server';
+                    console.error("Manual Broadcast send failed for", num, e);
+                }
+            });
+
+            await Promise.all(promises);
+
+            btn.disabled = false;
+            btn.innerHTML = origHTML;
+
+            if (successCount > 0) {
+                showToast(`✅ Alert sent to ${successCount}/${recipients.length} recipients!`, "success");
+            } else if (lastError) {
+                if (lastError.includes('daily limit') || lastError.includes('exceeded')) {
+                    showToast(`⚠️ Twilio daily limit (50/day) reached. Reset at midnight UTC.`, "error");
+                } else if (lastError.includes('opt')) {
+                    showToast(`⚠️ ` + (result.error || "Failed to send email."), "error");
+                } else {
+                    showToast(`❌ Alert failed: ${lastError.substring(0, 80)}`, "error");
+                }
+            } else {
+                showToast(`Alert queued to ${recipients.length} numbers.`, "success");
+            }
+
+            if (typeof renderCustomAlerts === 'function') {
+                renderCustomAlerts();
+            }
+        }
+
+        // Initialize script
+        window.addEventListener('DOMContentLoaded', () => {
+            initPredictor();
+            const doneBtn = document.getElementById('sliders-done-btn');
+            if (doneBtn) {
+                doneBtn.addEventListener('click', forceDoneBroadcast);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SmogNet — Real-Time Air Quality Intelligence</title>
+<link rel="icon" href="data:,">
+<link href="dist/output.css" rel="stylesheet"/>
+<style>
+    body {
+      background-color: #0A1220;
+      color: #e0e3e5;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .glass-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-card-hover:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(72, 241, 240, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .aqi-unhealthy {
+      background: linear-gradient(135deg, rgba(254, 175, 31, 0.1) 0%, rgba(254, 175, 31, 0.3) 100%);
+      border-color: #feaf1f;
+      color: #feaf1f;
+    }
+
+    .particles-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.4;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A1628;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #323537;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #48f1f0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(1.5); }
+    }
+
+    /* ── Emotional micro-interactions ── */
+    .emo-card {
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease;
+    }
+    .emo-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 60px rgba(72,241,240,0.12), 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .fade-in {
+      animation: fadeIn 0.7s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    /* Lungs breathe animation */
+    @keyframes breathe {
+      0%,100% { transform: scale(1); opacity: 0.9; }
+      50%      { transform: scale(1.08); opacity: 1; }
+    }
+    .lungs-anim { animation: breathe 3s ease-in-out infinite; }
+    /* Mist ring */
+    @keyframes mistPulse {
+      0%,100% { transform: scale(1);   opacity: 0.15; }
+      50%      { transform: scale(1.18); opacity: 0.35; }
+    }
+    .mist-ring { animation: mistPulse 4s ease-in-out infinite; }
+    /* Sensor pulsing dot */
+    @keyframes sensorPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(72,241,240,0.5); }
+      50%      { box-shadow: 0 0 0 8px rgba(72,241,240,0); }
+    }
+    .sensor-dot { animation: sensorPulse 1.8s ease-in-out infinite; }
+    /* Share button glow */
+    .share-btn:hover { box-shadow: 0 0 20px rgba(168,230,207,0.35); transform: translateY(-2px); }
+    .share-btn { transition: all 0.25s ease; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<canvas class="particles-overlay" id="particles-canvas"></canvas>
+<!-- TOP NAVIGATION BAR -->
+<header class="bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 border-b border-white/10 shadow-lg relative w-full">
+    <div class="max-w-container-max mx-auto px-margin-desktop py-4 flex justify-between items-center w-full">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-primary rounded-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-primary font-bold">cloud</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-primary bg-clip-text text-transparent tracking-tight leading-none">SmogNet</span>
+                <span class="text-[9px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Predictive AI Systems</span>
+            </div>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-8">
+            <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="index.html">Predictor Simulator</a>
+            <a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md font-label-md" href="smognet_intelligence_dashboard.html">City Monitor</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="dashboard.html">Dashboard 🇵🇰</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md flex items-center gap-1.5" href="chatbot.html">
+                <span class="material-symbols-outlined" style="font-size:16px">smart_toy</span>
+                AI Assistant
+            </a>
+        </nav>
+
+        <div id="header-live-badge" class="flex items-center gap-2 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/10">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="text-cyan-400 text-xs font-semibold">Live Monitor</span>
+        </div>
+    </div>
+</header>
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-desktop py-8 space-y-gutter">
+<!-- HERO SECTION — Emotional -->
+<section style="background:linear-gradient(135deg,rgba(13,25,48,0.95) 0%,rgba(10,18,32,0.98) 100%);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:2.5rem;margin-bottom:0;position:relative;overflow:hidden;" class="fade-in">
+  <!-- Background mist rings -->
+  <div style="position:absolute;top:-60px;right:-60px;width:320px;height:320px;border-radius:50%;border:2px solid rgba(168,230,207,0.1);" class="mist-ring"></div>
+  <div style="position:absolute;top:-30px;right:-30px;width:220px;height:220px;border-radius:50%;border:2px solid rgba(168,230,207,0.08);animation-delay:1s;" class="mist-ring"></div>
+
+  <div style="display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:center;">
+    <!-- Left: Text + Controls -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:linear-gradient(135deg,#A8E6CF,#48f1f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:11px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;">SmogNet Live</span>
+        <span class="sensor-dot" style="width:8px;height:8px;border-radius:50%;background:#A8E6CF;display:inline-block;"></span>
+      </div>
+      <h1 style="font-size:clamp(28px,4vw,46px);font-weight:800;line-height:1.15;color:#f0f4f8;margin-bottom:10px;">Breathe Easy,<br><span style="background:linear-gradient(135deg,#A8E6CF 0%,#48f1f0 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Live Safe</span></h1>
+      <p style="color:rgba(186,202,201,0.75);font-size:15px;line-height:1.6;max-width:520px;margin-bottom:20px;">Real-time smog monitoring to protect what matters most — <strong style="color:#A8E6CF;">your health and your family.</strong></p>
+
+      <!-- Dynamic emotional AQI message -->
+      <div id="hero-emotion-msg" style="display:inline-flex;align-items:center;gap:8px;background:rgba(168,230,207,0.08);border:1px solid rgba(168,230,207,0.2);border-radius:9999px;padding:8px 18px;margin-bottom:24px;font-size:13px;font-weight:600;color:#A8E6CF;">
+        <span id="hero-emotion-emoji">🌿</span>
+        <span id="hero-emotion-text">Great air day! Take a deep breath and enjoy outdoors.</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="position:relative;">
+          <select id="city-select" style="appearance:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e0e3e5;padding:10px 44px 10px 18px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;outline:none;">
+            <option value="Lahore">📍 Lahore</option>
+            <option value="Karachi">📍 Karachi</option>
+            <option value="Islamabad">📍 Islamabad</option>
+            <option value="Peshawar">📍 Peshawar</option>
+            <option value="Quetta">📍 Quetta</option>
+          </select>
+          <span class="material-symbols-outlined" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:rgba(186,202,201,0.6);font-size:18px;">expand_more</span>
+        </div>
+        <span id="hero-updated-time" style="color:rgba(186,202,201,0.5);font-size:12px;font-style:italic;">Last updated: just now</span>
+      </div>
+    </div>
+
+    <!-- Right: Lungs + AQI Number -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;min-width:180px;">
+      <!-- Animated Lungs SVG -->
+      <div style="position:relative;width:110px;height:110px;">
+        <div id="lungs-mist" style="position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(168,230,207,0.2) 0%,transparent 70%);" class="mist-ring"></div>
+        <svg class="lungs-anim" id="lungs-svg" viewBox="0 0 100 100" style="width:110px;height:110px;filter:drop-shadow(0 0 16px rgba(168,230,207,0.4));">
+          <!-- Left lung -->
+          <path d="M50 30 C40 30, 20 35, 18 55 C16 70, 22 82, 30 85 C38 88, 44 82, 46 75 C48 68, 50 55, 50 45 Z" fill="rgba(168,230,207,0.7)" stroke="rgba(168,230,207,0.4)" stroke-width="1"/>
+          <!-- Right lung -->
+          <path d="M50 30 C60 30, 80 35, 82 55 C84 70, 78 82, 70 85 C62 88, 56 82, 54 75 C52 68, 50 55, 50 45 Z" fill="rgba(168,230,207,0.7)" stroke="rgba(168,230,207,0.4)" stroke-width="1"/>
+          <!-- Trachea -->
+          <path d="M44 18 C44 18, 44 30, 50 30 C56 30, 56 18, 56 18" fill="none" stroke="rgba(168,230,207,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Bronchi hints -->
+          <path d="M50 38 C45 40, 38 42, 35 46" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M50 38 C55 40, 62 42, 65 46" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M35 46 C32 52, 30 58, 30 64" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-linecap="round"/>
+          <path d="M65 46 C68 52, 70 58, 70 64" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- AQI Number Card -->
+      <div id="hero-aqi-card" style="text-align:center;background:rgba(168,230,207,0.08);border:1px solid rgba(168,230,207,0.2);border-radius:16px;padding:14px 28px;transition:all 0.5s ease;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:rgba(186,202,201,0.6);text-transform:uppercase;margin-bottom:4px;">How Safe is Your Breath?</div>
+        <div id="hero-aqi-value" style="font-size:64px;font-weight:900;line-height:1;color:#A8E6CF;transition:color 0.5s;">--</div>
+        <div id="hero-aqi-status-badge" style="margin-top:8px;">
+          <span id="hero-aqi-status" style="display:inline-block;background:rgba(168,230,207,0.15);color:#A8E6CF;font-size:12px;font-weight:700;padding:4px 16px;border-radius:9999px;border:1px solid rgba(168,230,207,0.3);transition:all 0.5s;">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- KPI ROW — Humanized Labels -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+  <!-- How Safe is Your Breath -->
+  <div class="glass-card p-6 rounded-xl space-y-4 emo-card">
+    <div class="flex justify-between items-start">
+      <span style="color:rgba(186,202,201,0.8);font-size:13px;font-weight:600;">How Safe is Your Breath?</span>
+      <span class="text-primary material-symbols-outlined">favorite</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span id="kpi-aqi-value" class="text-headline-md font-headline-md">--</span>
+      <span id="kpi-aqi-trend" class="text-error text-label-sm flex items-center font-bold">
+        <span class="material-symbols-outlined text-sm">trending_up</span> Elevated
+      </span>
+    </div>
+    <div style="width:100%;height:6px;background:rgba(255,255,255,0.07);border-radius:9999px;overflow:hidden;">
+      <div id="kpi-aqi-progress" style="height:100%;width:0%;background:linear-gradient(90deg,#A8E6CF,#48f1f0);border-radius:9999px;transition:width 0.8s ease;"></div>
+    </div>
+  </div>
+
+  <!-- Pollution Spike Events -->
+  <div class="glass-card p-6 rounded-xl space-y-4 emo-card">
+    <div class="flex justify-between items-start">
+      <span style="color:rgba(186,202,201,0.8);font-size:13px;font-weight:600;">Pollution Spike Events</span>
+      <span style="color:#FFD3B6;" class="material-symbols-outlined">warning_amber</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span id="kpi-spikes-value" class="text-headline-md font-headline-md">-- Detected</span>
+    </div>
+    <div class="h-10 w-full opacity-60">
+      <svg class="w-full h-full fill-none stroke-2" style="stroke:#FFD3B6;" viewBox="0 0 100 20">
+        <path d="M0 15 L10 12 L20 18 L30 5 L40 10 L50 2 L60 14 L70 8 L80 16 L90 4 L100 12"></path>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Family Alerts Sent -->
+  <div class="glass-card p-6 rounded-xl space-y-4 emo-card">
+    <div class="flex justify-between items-start">
+      <span style="color:rgba(186,202,201,0.8);font-size:13px;font-weight:600;">Family Alerts Sent</span>
+      <span style="color:#A8E6CF;" class="material-symbols-outlined">family_restroom</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span id="kpi-alerts-value" class="text-headline-md font-headline-md">-- Today</span>
+    </div>
+    <div class="flex -space-x-2">
+      <div style="width:24px;height:24px;border-radius:50%;background:rgba(168,230,207,0.15);border:1px solid rgba(168,230,207,0.3);display:flex;align-items:center;justify-content:center;">
+        <span class="material-symbols-outlined" style="font-size:12px;color:#A8E6CF;">forum</span>
+      </div>
+      <div style="width:24px;height:24px;border-radius:50%;background:rgba(100,180,255,0.15);border:1px solid rgba(100,180,255,0.3);display:flex;align-items:center;justify-content:center;">
+        <span class="material-symbols-outlined" style="font-size:12px;color:#64b4ff;">sms</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tiny Particles in Your Air -->
+  <div class="glass-card p-6 rounded-xl space-y-4 emo-card">
+    <div class="flex justify-between items-start">
+      <span style="color:rgba(186,202,201,0.8);font-size:13px;font-weight:600;">Tiny Particles in Your Air</span>
+      <span style="color:#FF8C61;" class="material-symbols-outlined">air</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span id="kpi-dominant-name" class="text-headline-md font-headline-md">PM2.5</span>
+      <span id="kpi-dominant-value" style="color:rgba(186,202,201,0.7);font-size:12px;">-- µg/m³</span>
+    </div>
+    <div>
+      <span id="kpi-dominant-status" class="px-2 py-0.5 rounded text-[10px] bg-error/20 text-error border border-error/30 uppercase font-bold">Toxic</span>
+    </div>
+  </div>
+</div>
+
+<!-- WHY THIS MATTERS PANEL -->
+<div id="why-matters-panel" style="background:linear-gradient(135deg,rgba(13,37,64,0.9) 0%,rgba(10,25,45,0.95) 100%);border:1px solid rgba(168,230,207,0.15);border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:24px;position:relative;overflow:hidden;" class="fade-in">
+  <!-- Calming gradient accent -->
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(168,230,207,0.05) 0%,transparent 60%);pointer-events:none;"></div>
+  <!-- Icon: person holding child -->
+  <div style="flex-shrink:0;width:64px;height:64px;border-radius:50%;background:rgba(168,230,207,0.1);border:1px solid rgba(168,230,207,0.2);display:flex;align-items:center;justify-content:center;">
+    <svg viewBox="0 0 40 40" style="width:36px;height:36px;">
+      <!-- Adult -->
+      <circle cx="14" cy="9" r="4" fill="rgba(168,230,207,0.8)"/>
+      <path d="M8 28 C8 18, 20 18, 20 28" fill="rgba(168,230,207,0.6)"/>
+      <!-- Child -->
+      <circle cx="26" cy="12" r="3" fill="rgba(72,241,240,0.8)"/>
+      <path d="M20 28 C20 20, 32 20, 32 28" fill="rgba(72,241,240,0.5)"/>
+      <!-- Holding hands -->
+      <line x1="18" y1="22" x2="22" y2="22" stroke="rgba(168,230,207,0.9)" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <!-- Message -->
+  <div style="flex:1;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:rgba(168,230,207,0.6);margin-bottom:6px;">Why This Matters</div>
+    <p id="why-matters-msg" style="font-size:15px;color:#e0e3e5;font-weight:500;line-height:1.5;">Great air day! Take a deep breath and enjoy outdoors.</p>
+  </div>
+  <!-- AQI Emotion Badge -->
+  <div id="why-matters-badge" style="flex-shrink:0;text-align:center;padding:10px 18px;border-radius:12px;background:rgba(168,230,207,0.1);border:1px solid rgba(168,230,207,0.2);">
+    <div id="why-matters-emoji" style="font-size:28px;margin-bottom:4px;">🌿</div>
+    <div id="why-matters-label" style="font-size:10px;font-weight:800;letter-spacing:0.05em;color:#A8E6CF;text-transform:uppercase;">Fresh Air</div>
+  </div>
+</div>
+<!-- MAIN GRID -->
+<div class="grid grid-cols-1 lg:grid-cols-10 gap-gutter">
+<!-- Left Column (60%) -->
+<div class="lg:col-span-6 space-y-gutter">
+<div class="glass-card p-6 rounded-xl h-[400px] flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-headline-md font-headline-md">Pollutant Trends (24h)</h3>
+<div class="flex gap-2">
+<button id="btn-trend-pm25" onclick="setTrendPollutant('pm25')" class="text-label-sm px-3 py-1 bg-primary text-on-primary rounded-full transition-all">PM2.5</button>
+<button id="btn-trend-no2" onclick="setTrendPollutant('no2')" class="text-label-sm px-3 py-1 text-on-surface-variant hover:bg-white/5 rounded-full transition-all">NO2</button>
+<button id="btn-trend-o3" onclick="setTrendPollutant('o3')" class="text-label-sm px-3 py-1 text-on-surface-variant hover:bg-white/5 rounded-full transition-all">O3</button>
+</div>
+</div>
+<div id="trend-bars-container" class="flex-grow flex items-end gap-1">
+<!-- Simulated Chart Bars (dynamic) -->
+</div>
+<div id="trend-labels" class="flex justify-between mt-4 text-[10px] text-on-surface-variant/50 font-mono">
+<!-- Labels (dynamic) -->
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl">
+<h3 class="text-label-md font-label-md mb-4 uppercase tracking-wider text-on-surface-variant">Daily Heatmap Index</h3>
+<div id="heatmap-grid" class="grid grid-cols-7 gap-2">
+<!-- Simulated Heatmap Grid (dynamic) -->
+</div>
+</div>
+</div>
+<!-- Right Column (40%) -->
+<div class="lg:col-span-4 space-y-gutter">
+<div class="glass-card p-6 rounded-xl flex flex-col h-[400px]">
+<h3 class="text-headline-md font-headline-md mb-6">Detected Anomalies</h3>
+<div id="anomalies-list" class="flex-grow overflow-y-auto space-y-4 pr-2">
+<!-- Dynamic Anomalies -->
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl">
+<h3 class="text-label-md font-label-md mb-5 uppercase tracking-wider text-on-surface-variant">Source Distribution</h3>
+<div style="display:flex;align-items:center;gap:20px;">
+  <div style="position:relative;width:96px;height:96px;flex-shrink:0;">
+    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3.5"></circle>
+      <circle id="circle-ind"  cx="18" cy="18" r="15.9155" fill="none" stroke="#48f1f0" stroke-width="3.5" stroke-dasharray="45 100" stroke-dashoffset="0" stroke-linecap="round"></circle>
+      <circle id="circle-agri" cx="18" cy="18" r="15.9155" fill="none" stroke="#ffd498" stroke-width="3.5" stroke-dasharray="25 100" stroke-dashoffset="-45" stroke-linecap="round"></circle>
+      <circle id="circle-veh"  cx="18" cy="18" r="15.9155" fill="none" stroke="#859493" stroke-width="3.5" stroke-dasharray="30 100" stroke-dashoffset="-70" stroke-linecap="round"></circle>
+    </svg>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+      <span id="source-donut-centre" style="font-size:13px;font-weight:800;color:#e0e3e5;">--</span>
+      <span style="font-size:9px;color:rgba(186,202,201,0.6);margin-top:1px;">top src</span>
+    </div>
+  </div>
+  <div id="source-distribution-legend" style="flex:1;min-width:0;">
+    <!-- Legend (dynamic) -->
+  </div>
+</div>
+</div>
+</div>
+</div>
+<!-- ALERT PANEL -->
+<section class="glass-card p-8 rounded-xl border-l-4 border-l-primary relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[100px]">auto_awesome</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+<div class="space-y-3 max-w-3xl">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined">psychology</span>
+<span class="text-label-md font-label-md uppercase tracking-widest">AI-Generated Public Health Alert</span>
+</div>
+<h3 id="ai-alert-title" class="text-headline-md font-headline-md">Lahore: Industrial smoke spike detected in North Zone.</h3>
+<p id="ai-alert-message" class="text-body-md font-body-md text-on-surface-variant">
+            High risk for respiratory patients. Particulate matter levels have exceeded safe limits by 3x. 
+            <span class="text-on-surface font-bold">Avoid outdoor exercise and keep windows closed.</span>
+</p>
+<div class="flex items-center gap-6 pt-2">
+<div class="flex items-center gap-2">
+<span class="text-2xl">👶</span><span class="text-label-sm text-on-surface-variant">Infants</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-2xl">👴</span><span class="text-label-sm text-on-surface-variant">Elderly</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-2xl">🫁</span><span class="text-label-sm text-on-surface-variant">High Risk</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 min-w-[200px]">
+<button class="w-full bg-primary text-on-primary font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined">forum</span> WhatsApp Broadcast
+          </button>
+<button class="w-full border border-primary/40 text-primary font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined">sms</span> SMS Alert
+          </button>
+<div class="text-center text-[10px] text-on-surface-variant/40 italic">Powered by Gemini AI</div>
+</div>
+</div>
+</section>
+<!-- CITY COMPARISON & MAP -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div class="glass-card rounded-xl overflow-hidden min-h-[400px] relative">
+<div class="absolute inset-0 bg-surface-dim/50 flex items-center justify-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAbbRfbdmcxBs0xTGDVyFfdF4fn0V0sDkH6ytmjOT0T-woPeAdmDK_85sHX2QSjtMt0LW1wAKEk8iPsXlyaaIBHkc_SmsIVrA5P89VkbcNb4dwwrQZIDAI79kEb31rwHeqToAMIjYRg8INJvNqYk1idRTd08YMDOBqEH9uLsvuITgV9BO_oZiPebM5F2TOlF15Bx87jlzCoBsCZgkBk_32xpQAflObLXK3Ck-W8zl-P3icU__LzYsk_i3ACmjyHj0uTfb5GmQBEcBh6'); background-size: cover; background-position: center;">
+<div class="absolute inset-0 bg-surface-dim/60 backdrop-blur-[2px]"></div>
+<div id="map-markers-container" class="absolute inset-0"></div>
+</div>
+<div class="absolute top-4 left-4 p-3 glass-card rounded-lg pointer-events-none">
+<span class="text-label-md font-bold block">Atmospheric Map</span>
+<span class="text-label-sm text-on-surface-variant italic">Pakistan Real-time Layer</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col">
+<h3 style="font-size:18px;font-weight:700;color:#e0e3e5;margin-bottom:8px;">🏙️ City Air Rankings</h3>
+<p style="font-size:12px;color:rgba(186,202,201,0.6);margin-bottom:20px;">Click any city to see their air quality story</p>
+<div id="city-ranking-list" class="space-y-4 flex-grow"></div>
+</div>
+</section>
+<!-- RECENT ALERTS TABLE -->
+<section class="glass-card p-6 rounded-xl overflow-hidden">
+<h3 style="font-size:18px;font-weight:700;color:#e0e3e5;margin-bottom:4px;">📡 Recent Notification Dispatch</h3>
+<p style="font-size:12px;color:rgba(186,202,201,0.5);margin-bottom:20px;">Alerts sent to protect families across Pakistan</p>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-white/10 text-on-surface-variant text-label-sm uppercase tracking-wider">
+<th class="pb-4 font-semibold">Time</th>
+<th class="pb-4 font-semibold">City</th>
+<th class="pb-4 font-semibold">Source</th>
+<th class="pb-4 font-semibold">Recipients</th>
+<th class="pb-4 font-semibold">Channel</th>
+<th class="pb-4 font-semibold">Status</th>
+</tr>
+</thead>
+<tbody id="recent-dispatch-tbody" class="divide-y divide-white/5"></tbody>
+</table>
+</div>
+</section>
+</main>
+
+<!-- FOOTER — Emotional CTA -->
+<footer style="background:linear-gradient(180deg,rgba(10,18,32,0) 0%,rgba(8,14,26,0.98) 40%);border-top:1px solid rgba(168,230,207,0.1);width:100%;margin-top:auto;">
+  <!-- Emotional CTA Band -->
+  <div style="background:linear-gradient(135deg,rgba(13,37,64,0.8) 0%,rgba(10,25,45,0.9) 100%);border-bottom:1px solid rgba(168,230,207,0.08);padding:28px 40px;">
+    <div style="max-width:1440px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(168,230,207,0.1);border:1px solid rgba(168,230,207,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="font-size:22px;">💚</span>
+        </div>
+        <div>
+          <p style="font-size:15px;font-weight:700;color:#e0e3e5;margin-bottom:2px;">Share this dashboard with someone you care about.</p>
+          <p style="font-size:13px;color:rgba(186,202,201,0.6);">Together, we breathe cleaner. 🌿</p>
+        </div>
+      </div>
+      <div style="position:relative;display:inline-block;">
+        <button onclick="shareAirReport()" class="share-btn" title="Protect your loved ones — send them today's air quality." style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(168,230,207,0.15),rgba(72,241,240,0.1));border:1px solid rgba(168,230,207,0.3);color:#A8E6CF;font-size:14px;font-weight:700;padding:12px 24px;border-radius:12px;cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size:18px;">share</span>
+          Share Air Report
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Standard Footer -->
+  <div style="max-width:1440px;margin:0 auto;padding:24px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+    <div>
+      <span style="font-size:16px;font-weight:800;background:linear-gradient(135deg,#A8E6CF,#48f1f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">SmogNet</span>
+      <p style="color:rgba(186,202,201,0.5);font-size:11px;margin-top:4px;">© 2025 SmogNet Atmospheric Systems · Data refreshed every 5 mins.</p>
+      <p style="color:rgba(72,241,240,0.4);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;">SmogNet Datathon 2025 | UET Mardan</p>
+    </div>
+    <div style="display:flex;gap:28px;">
+      <a href="#" style="color:rgba(186,202,201,0.5);font-size:13px;text-decoration:none;" onmouseover="this.style.color='#A8E6CF'" onmouseout="this.style.color='rgba(186,202,201,0.5)'">Health Guidelines</a>
+      <a href="#" style="color:rgba(186,202,201,0.5);font-size:13px;text-decoration:none;" onmouseover="this.style.color='#A8E6CF'" onmouseout="this.style.color='rgba(186,202,201,0.5)'">Sensor Network</a>
+      <a href="chatbot.html" style="color:rgba(186,202,201,0.5);font-size:13px;text-decoration:none;" onmouseover="this.style.color='#A8E6CF'" onmouseout="this.style.color='rgba(186,202,201,0.5)'">AI Assistant</a>
+    </div>
+  </div>
+</footer>
+<script>
+    // Subtle Particle Background Effect
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.2;
+        this.vy = (Math.random() - 0.5) * 0.2;
+        this.radius = Math.random() * 1.5;
+        this.opacity = Math.random() * 0.5;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+          this.reset();
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(72, 241, 240, ${this.opacity})`;
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 100; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+  <script>
+  const getApiUrl = (endpoint) => {
+    if (window.location.protocol === 'file:') {
+      return `http://127.0.0.1:5000${endpoint}`;
+    }
+    return endpoint;
+  };
+
+  let appData = null;
+  let currentCity = "Lahore";
+  let currentTrendPollutant = "pm25";
+
+  async function loadData() {
+    try {
+      const response = await fetch(getApiUrl('/aqi_data.json'));
+      appData = await response.json();
+      initDashboard();
+    } catch (error) {
+      console.error("Error loading AQI data:", error);
+    }
+  }
+
+  function initDashboard() {
+    // 1. Setup City Selector Event
+    const citySelect = document.getElementById('city-select');
+    if (citySelect) {
+      citySelect.value = currentCity;
+      citySelect.addEventListener('change', (e) => {
+        currentCity = e.target.value;
+        updateCityData();
+      });
+    }
+
+    // 2. Render static elements that depend on all cities (e.g. City Ranking, Map Markers)
+    renderCityRankings();
+    renderMapMarkers();
+
+    // 3. Update data for current selected city
+    updateCityData();
+    
+    // 4. Render recent notifications table
+    renderNotificationsTable();
+  }
+
+  function getAqiCategory(aqi) {
+    if (aqi <= 50) return { name: "Good", colorClass: "text-green-400", bgClass: "bg-green-500/20", borderClass: "border-green-500/30", gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.3) 100%)" };
+    if (aqi <= 100) return { name: "Moderate", colorClass: "text-yellow-400", bgClass: "bg-yellow-500/20", borderClass: "border-yellow-500/30", gradient: "linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(234, 179, 8, 0.3) 100%)" };
+    if (aqi <= 150) return { name: "Unhealthy for Sensitive Groups", colorClass: "text-orange-400", bgClass: "bg-orange-500/20", borderClass: "border-orange-500/30", gradient: "linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(249, 115, 22, 0.3) 100%)" };
+    if (aqi <= 200) return { name: "Unhealthy", colorClass: "text-red-400", bgClass: "bg-red-500/20", borderClass: "border-red-500/30", gradient: "linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.3) 100%)" };
+    if (aqi <= 300) return { name: "Very Unhealthy", colorClass: "text-purple-400", bgClass: "bg-purple-500/20", borderClass: "border-purple-500/30", gradient: "linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.3) 100%)" };
+    return { name: "Hazardous", colorClass: "text-rose-600", bgClass: "bg-rose-950/40", borderClass: "border-rose-900/50", gradient: "linear-gradient(135deg, rgba(159, 18, 57, 0.1) 0%, rgba(159, 18, 57, 0.3) 100%)" };
+  }
+
+  function updateCityData() {
+    if (!appData || !appData.cities[currentCity]) return;
+    const cityInfo = appData.cities[currentCity];
+    const cat = getAqiCategory(cityInfo.aqi);
+
+    // Update Hero Section
+    document.getElementById('hero-aqi-value').textContent = cityInfo.aqi;
+    document.getElementById('hero-aqi-status').textContent = cat.name;
+    
+    const heroCard = document.getElementById('hero-aqi-card');
+    heroCard.style.background = cat.gradient;
+    heroCard.style.borderColor = cat.colorClass.replace('text-', ''); // Convert color class to inline style color
+    
+    const statusBadge = document.getElementById('hero-aqi-status-badge');
+    statusBadge.className = `px-4 py-1 ${cat.bgClass} rounded-full border ${cat.borderClass}`;
+    document.getElementById('hero-aqi-status').className = `${cat.colorClass} font-bold text-label-md`;
+    document.getElementById('hero-updated-time').textContent = `Last updated: ${cityInfo.updated}`;
+
+    // Update Live Badge in Header — safely update children of the outer badge div
+    const liveBadge = document.getElementById('header-live-badge');
+    if (liveBadge) {
+      const dot  = liveBadge.querySelector('.animate-pulse');
+      const text = liveBadge.querySelector('span:last-child');
+      if (dot)  dot.style.background  = cat.colorClass.includes('green') ? '#4ade80'
+                                       : cat.colorClass.includes('yellow') ? '#facc15'
+                                       : cat.colorClass.includes('orange') ? '#fb923c'
+                                       : cat.colorClass.includes('red')    ? '#f87171'
+                                       : cat.colorClass.includes('purple') ? '#c084fc' : '#fb7185';
+      if (text) { text.style.color = dot ? dot.style.background : '#48f1f0'; text.textContent = `Live: ${cat.name}`; }
+    }
+
+    // Update KPIs
+    document.getElementById('kpi-aqi-value').textContent = cityInfo.aqi;
+    const progressPercent = Math.min(100, (cityInfo.aqi / 300) * 100);
+    document.getElementById('kpi-aqi-progress').style.width = `${progressPercent}%`;
+    
+    const trendSpan = document.getElementById('kpi-aqi-trend');
+    if (cityInfo.aqi > 150) {
+      trendSpan.className = "text-error text-label-sm flex items-center font-bold";
+      trendSpan.innerHTML = `<span class="material-symbols-outlined text-sm">trending_up</span> Elevated`;
+    } else {
+      trendSpan.className = "text-green-400 text-label-sm flex items-center font-bold";
+      trendSpan.innerHTML = `<span class="material-symbols-outlined text-sm">trending_down</span> Stable`;
+    }
+
+    document.getElementById('kpi-spikes-value').textContent = `${cityInfo.activeSpikes} Detected`;
+    
+    // Add custom simulation alerts to the dashboard KPI total
+    const customAlerts = JSON.parse(localStorage.getItem('smognet_custom_alerts') || '[]');
+    const totalCustomAlerts = customAlerts.length;
+    document.getElementById('kpi-alerts-value').textContent = `${cityInfo.alertsToday + totalCustomAlerts} Today`;
+    
+    document.getElementById('kpi-dominant-name').textContent = cityInfo.dominantPollutant;
+    document.getElementById('kpi-dominant-value').textContent = cityInfo.dominantValue;
+    
+    const domStatus = document.getElementById('kpi-dominant-status');
+    domStatus.textContent = cityInfo.dominantStatus;
+    if (cityInfo.dominantStatus === "Toxic") {
+      domStatus.className = "px-2 py-0.5 rounded text-[10px] bg-error/20 text-error border border-error/30 uppercase font-bold";
+    } else {
+      domStatus.className = "px-2 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 border border-green-500/30 uppercase font-bold";
+    }
+
+    // Update Trends Chart
+    updateTrendsChart();
+
+    // Update Heatmap
+    const heatmapGrid = document.getElementById('heatmap-grid');
+    heatmapGrid.innerHTML = '';
+    cityInfo.heatmap.forEach(aqiVal => {
+      const tileCat = getAqiCategory(aqiVal);
+      const tile = document.createElement('div');
+      tile.className = `aspect-square rounded border border-white/5 transition-all hover:scale-110 cursor-help`;
+      tile.style.background = tileCat.gradient;
+      tile.style.borderColor = tileCat.colorClass.replace('text-', '');
+      tile.title = `AQI: ${aqiVal} (${tileCat.name})`;
+      heatmapGrid.appendChild(tile);
+    });
+
+    // Update Anomalies
+    const anomaliesList = document.getElementById('anomalies-list');
+    anomaliesList.innerHTML = '';
+    if (!cityInfo.anomalies || cityInfo.anomalies.length === 0) {
+      anomaliesList.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(186,202,201,0.4);font-style:italic;padding:2rem 0;">
+          ✅ No anomalies detected today.
+        </div>
+      `;
+    } else {
+      cityInfo.anomalies.forEach((anomaly, idx) => {
+        const isHigh   = anomaly.level === 'High';
+        const isMedium = anomaly.level === 'Medium';
+        const levelColor   = isHigh ? '#ffb4ab' : (isMedium ? '#ffd498' : '#bacac9');
+        const bgColor      = isHigh ? 'rgba(255,180,171,0.06)' : (isMedium ? 'rgba(255,212,152,0.06)' : 'rgba(255,255,255,0.03)');
+        const borderColor  = isHigh ? 'rgba(255,180,171,0.2)'  : (isMedium ? 'rgba(255,212,152,0.2)'  : 'rgba(255,255,255,0.07)');
+        const pulseAnim    = isHigh ? 'animation:pulse 1.5s infinite;' : '';
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:12px;background:${bgColor};border:1px solid ${borderColor};margin-bottom:10px;transition:all 0.2s;`;
+        div.onmouseenter = () => div.style.transform = 'translateX(4px)';
+        div.onmouseleave = () => div.style.transform = '';
+        div.innerHTML = `
+          <div style="font-size:1.4rem;min-width:2rem;text-align:center;">${anomaly.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <span style="font-weight:700;color:#e0e3e5;font-size:13px;">${anomaly.title}</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${levelColor};">
+                <span style="width:6px;height:6px;border-radius:50%;background:${levelColor};display:inline-block;${pulseAnim}"></span>
+                ${anomaly.level}
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(186,202,201,0.7);">
+              <span>📍 ${anomaly.location}</span>
+              <span>🕐 ${anomaly.time}</span>
+            </div>
+          </div>
+        `;
+        anomaliesList.appendChild(div);
+      });
+    }
+
+    // Update Source Distribution
+    const dist = cityInfo.sourceDistribution;
+    const indCircle  = document.getElementById('circle-ind');
+    const agriCircle = document.getElementById('circle-agri');
+    const vehCircle  = document.getElementById('circle-veh');
+
+    if (indCircle && agriCircle && vehCircle) {
+      const indDash  = dist.industrial;
+      const agriDash = dist.agricultural;
+      const vehDash  = dist.vehicular;
+      indCircle.setAttribute('stroke-dasharray',  `${indDash} 100`);
+      indCircle.setAttribute('stroke-dashoffset', `0`);
+      agriCircle.setAttribute('stroke-dasharray',  `${agriDash} 100`);
+      agriCircle.setAttribute('stroke-dashoffset', `-${indDash}`);
+      vehCircle.setAttribute('stroke-dasharray',  `${vehDash} 100`);
+      vehCircle.setAttribute('stroke-dashoffset', `-${indDash + agriDash}`);
+    }
+
+    // Update donut centre label with dominant percentage
+    const dominantPct = Math.max(dist.industrial, dist.agricultural, dist.vehicular);
+    const donutLabel = document.querySelector('#source-donut-centre');
+    if (donutLabel) donutLabel.textContent = `${dominantPct}%`;
+
+    const legendContainer = document.getElementById('source-distribution-legend');
+    const sources = [
+      { label: 'Industrial',   pct: dist.industrial,   color: '#48f1f0' },
+      { label: 'Agricultural', pct: dist.agricultural, color: '#ffd498' },
+      { label: 'Vehicular',    pct: dist.vehicular,    color: '#859493' },
+    ];
+    legendContainer.innerHTML = sources.map(s => `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:${s.color};display:inline-block;flex-shrink:0;"></span>
+          <span style="font-size:12px;color:#bacac9;">${s.label}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:60px;height:4px;border-radius:9999px;background:rgba(255,255,255,0.07);overflow:hidden;">
+            <div style="width:${s.pct}%;height:100%;background:${s.color};border-radius:9999px;"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#e0e3e5;min-width:30px;text-align:right;">${s.pct}%</span>
+        </div>
+      </div>
+    `).join('');
+
+    // Update AI alert panel
+    document.getElementById('ai-alert-title').textContent = cityInfo.aiAlert.title;
+    document.getElementById('ai-alert-message').textContent = cityInfo.aiAlert.message;
+
+    // ── Emotional State Updates (driven by AQI) ──
+    updateEmotionalState(cityInfo.aqi, currentCity, cat);
+
+    // Make map markers highlight selected city
+    document.querySelectorAll('.map-marker-node').forEach(node => {
+      if (node.getAttribute('data-city') === currentCity) {
+        node.className = "absolute p-2 glass-card rounded-full flex items-center gap-2 animate-bounce border-2 border-primary z-30 map-marker-node";
+      } else {
+        node.className = "absolute p-2 glass-card rounded-full flex items-center gap-2 border border-white/20 z-10 map-marker-node";
+      }
+    });
+  }
+
+  function updateEmotionalState(aqi, city, cat) {
+    // Emotion-driven color palette
+    let emoColor, emoEmoji, emoLabel, heroMsg, heroEmoji, whyMsg, lungsFill, lungsMist;
+    if (aqi <= 50) {
+      emoColor='#A8E6CF'; emoEmoji='🌿'; emoLabel='Fresh Air';
+      heroMsg='Great air day! Take a deep breath and enjoy outdoors.'; heroEmoji='🌿';
+      whyMsg=`Great air day in ${city}! Take a deep breath and enjoy the outdoors with your family.`;
+      lungsFill='rgba(168,230,207,0.8)'; lungsMist='rgba(168,230,207,0.25)';
+    } else if (aqi <= 100) {
+      emoColor='#FFD3B6'; emoEmoji='🌤️'; emoLabel='Heads Up';
+      heroMsg='Air is okay, but sensitive folks should take it easy.'; heroEmoji='🌤️';
+      whyMsg=`Air is moderate in ${city}. Sensitive groups like children and the elderly should limit prolonged outdoor activity.`;
+      lungsFill='rgba(255,211,182,0.75)'; lungsMist='rgba(255,211,182,0.2)';
+    } else if (aqi <= 150) {
+      emoColor='#FF8C61'; emoEmoji='😷'; emoLabel='Take Care';
+      heroMsg='Air quality is reduced. Consider wearing a mask if stepping out.'; heroEmoji='😷';
+      whyMsg=`Air quality in ${city} is reduced. Consider wearing a mask outdoors. Keep windows closed and limit outdoor time for kids.`;
+      lungsFill='rgba(255,140,97,0.7)'; lungsMist='rgba(255,140,97,0.2)';
+    } else if (aqi <= 200) {
+      emoColor='#FF6B6B'; emoEmoji='⚠️'; emoLabel='Limit Outings';
+      heroMsg='Unhealthy air detected. Limit time outdoors and wear a mask.'; heroEmoji='⚠️';
+      whyMsg=`Unhealthy air in ${city}. Limit outdoor outings. Keep children and elderly indoors. Use air purifiers if available.`;
+      lungsFill='rgba(255,107,107,0.7)'; lungsMist='rgba(255,107,107,0.18)';
+    } else {
+      emoColor='#C0392B'; emoEmoji='🚨'; emoLabel='Stay Inside';
+      heroMsg='HAZARDOUS air! Stay indoors. Do not go outside without proper protection.'; heroEmoji='🚨';
+      whyMsg=`HAZARDOUS conditions in ${city}. Stay indoors immediately. Close all windows. Avoid all outdoor exposure — especially for children, elderly, and those with respiratory conditions.`;
+      lungsFill='rgba(192,57,43,0.7)'; lungsMist='rgba(192,57,43,0.15)';
+    }
+
+    // 1. Hero AQI card color
+    const heroCard = document.getElementById('hero-aqi-card');
+    if (heroCard) {
+      heroCard.style.borderColor = emoColor + '40';
+      heroCard.style.background  = emoColor.replace('#','rgba(') + ',0.08)'.replace('rgba(','rgba(') || `rgba(168,230,207,0.08)`;
+    }
+    const heroVal = document.getElementById('hero-aqi-value');
+    if (heroVal) heroVal.style.color = emoColor;
+    const heroStatus = document.getElementById('hero-aqi-status');
+    if (heroStatus) { heroStatus.textContent = cat.name; heroStatus.style.color = emoColor; heroStatus.style.borderColor = emoColor+'50'; heroStatus.style.background = emoColor+'15'; }
+
+    // 2. Hero emotional message pill
+    const msgBox = document.getElementById('hero-emotion-msg');
+    const msgTxt = document.getElementById('hero-emotion-text');
+    const msgEmj = document.getElementById('hero-emotion-emoji');
+    if (msgBox) { msgBox.style.color = emoColor; msgBox.style.borderColor = emoColor+'40'; msgBox.style.background = emoColor+'12'; }
+    if (msgTxt) msgTxt.textContent = heroMsg;
+    if (msgEmj) msgEmj.textContent = heroEmoji;
+
+    // 3. Why This Matters panel
+    const whyMsg_el = document.getElementById('why-matters-msg');
+    if (whyMsg_el) { whyMsg_el.textContent = whyMsg; whyMsg_el.style.animation = 'fadeIn 0.5s ease'; }
+    const whyEmoji = document.getElementById('why-matters-emoji');
+    if (whyEmoji) whyEmoji.textContent = emoEmoji;
+    const whyLabel = document.getElementById('why-matters-label');
+    if (whyLabel) { whyLabel.textContent = emoLabel; whyLabel.style.color = emoColor; }
+    const whyBadge = document.getElementById('why-matters-badge');
+    if (whyBadge) { whyBadge.style.borderColor = emoColor+'40'; whyBadge.style.background = emoColor+'10'; }
+
+    // 4. Lungs SVG color shift
+    const lungsEl = document.getElementById('lungs-svg');
+    if (lungsEl) {
+      lungsEl.querySelectorAll('path[fill]').forEach((p,i) => {
+        if (i < 2) p.setAttribute('fill', lungsFill);
+      });
+      lungsEl.style.filter = `drop-shadow(0 0 16px ${lungsMist})`;
+    }
+    const mistEl = document.getElementById('lungs-mist');
+    if (mistEl) mistEl.style.background = `radial-gradient(circle,${lungsMist} 0%,transparent 70%)`;
+  }
+
+  function shareAirReport() {
+    const city = currentCity;
+    const aqi  = appData?.cities[city]?.aqi ?? '--';
+    const status = appData?.cities[city]?.status ?? '';
+    const msg  = `🌿 SmogNet Air Quality Report\n📍 ${city}\n💨 AQI: ${aqi} (${status})\n🔗 Check live data: ${window.location.href}\n\nStay safe. Share with those you care about.`;
+    if (navigator.share) {
+      navigator.share({ title: 'SmogNet Air Report', text: msg, url: window.location.href }).catch(()=>{});
+    } else {
+      navigator.clipboard.writeText(msg).then(() => {
+        const btn = document.querySelector('.share-btn');
+        if (btn) { btn.textContent = '✅ Copied to clipboard!'; setTimeout(()=>{ btn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px;">share</span> Share Air Report'; }, 2500); }
+      });
+    }
+  }
+
+
+  function updateTrendsChart() {
+    if (!appData) return;
+    const cityInfo = appData.cities[currentCity];
+    const trends = cityInfo.trends24h;
+    const pollutantValues = trends[currentTrendPollutant];
+    
+    // Highlight active button
+    document.getElementById('btn-trend-pm25').className = currentTrendPollutant === 'pm25' 
+      ? 'text-label-sm px-3 py-1 bg-primary text-on-primary rounded-full transition-all'
+      : 'text-label-sm px-3 py-1 text-on-surface-variant hover:bg-white/5 rounded-full transition-all';
+    document.getElementById('btn-trend-no2').className = currentTrendPollutant === 'no2'
+      ? 'text-label-sm px-3 py-1 bg-primary text-on-primary rounded-full transition-all'
+      : 'text-label-sm px-3 py-1 text-on-surface-variant hover:bg-white/5 rounded-full transition-all';
+    document.getElementById('btn-trend-o3').className = currentTrendPollutant === 'o3'
+      ? 'text-label-sm px-3 py-1 bg-primary text-on-primary rounded-full transition-all'
+      : 'text-label-sm px-3 py-1 text-on-surface-variant hover:bg-white/5 rounded-full transition-all';
+
+    const chartContainer = document.getElementById('trend-bars-container');
+    chartContainer.innerHTML = '';
+    
+    const maxVal = Math.max(...pollutantValues);
+    
+    pollutantValues.forEach((val, index) => {
+      const heightPercent = maxVal > 0 ? (val / maxVal) * 90 + 10 : 10;
+      const bar = document.createElement('div');
+      const barColorClass = val > 80 ? 'bg-error/30 hover:bg-error/50' : (val > 40 ? 'bg-tertiary/30 hover:bg-tertiary/50' : 'bg-primary/20 hover:bg-primary/40');
+      bar.className = `flex-grow ${barColorClass} rounded-t transition-all cursor-help relative group`;
+      bar.style.height = `${heightPercent}%`;
+      
+      // Tooltip
+      bar.innerHTML = `
+        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-surface-container text-white text-[10px] rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
+          ${val} µg/m³
+        </div>
+      `;
+      chartContainer.appendChild(bar);
+    });
+
+    const labelsContainer = document.getElementById('trend-labels');
+    labelsContainer.innerHTML = '';
+    trends.labels.forEach(label => {
+      const span = document.createElement('span');
+      span.textContent = label;
+      labelsContainer.appendChild(span);
+    });
+  }
+
+  function setTrendPollutant(pollutant) {
+    currentTrendPollutant = pollutant;
+    updateTrendsChart();
+  }
+
+  function renderCityRankings() {
+    if (!appData) return;
+    const container = document.getElementById('city-ranking-list');
+    container.innerHTML = '';
+    
+    // Get cities array with AQI and names, sorted by AQI descending
+    const citiesArray = Object.keys(appData.cities).map(name => {
+      return {
+        name: name,
+        aqi: appData.cities[name].aqi,
+        status: appData.cities[name].status
+      };
+    }).sort((a, b) => b.aqi - a.aqi);
+
+    citiesArray.forEach((city, index) => {
+      const rankingNum = String(index + 1).padStart(2, '0');
+      const cat = getAqiCategory(city.aqi);
+      const div = document.createElement('div');
+      
+      let bgClass = "bg-surface-container-high/50 border border-white/5";
+      if (cat.name.includes("Very Unhealthy") || cat.name === "Hazardous") {
+        bgClass = "bg-purple-950/10 border border-purple-500/20";
+      } else if (cat.name === "Unhealthy") {
+        bgClass = "bg-red-950/10 border border-red-500/20";
+      } else if (cat.name.includes("Sensitive Groups")) {
+        bgClass = "bg-orange-950/10 border border-orange-500/20";
+      }
+      
+      div.className = `flex items-center justify-between p-4 rounded-lg ${bgClass} transition-all hover:scale-[1.01] cursor-pointer`;
+      div.addEventListener('click', () => {
+        currentCity = city.name;
+        const selector = document.getElementById('city-select');
+        if (selector) selector.value = currentCity;
+        updateCityData();
+      });
+      
+      div.innerHTML = `
+        <div class="flex items-center gap-4">
+          <span class="text-label-md font-bold opacity-50">${rankingNum}</span>
+          <span class="font-bold text-on-surface">${city.name}</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-on-surface-variant text-label-sm italic">${city.status}</span>
+          <span class="text-headline-md font-bold ${cat.colorClass}">${city.aqi}</span>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function renderMapMarkers() {
+    if (!appData) return;
+    const container = document.getElementById('map-markers-container');
+    container.innerHTML = '';
+
+    Object.keys(appData.cities).forEach(cityName => {
+      const city = appData.cities[cityName];
+      const cat = getAqiCategory(city.aqi);
+      const marker = document.createElement('div');
+      
+      // Set position
+      marker.style.top = city.mapCoord.top;
+      marker.style.left = city.mapCoord.left;
+      marker.setAttribute('data-city', cityName);
+      marker.className = "absolute p-2 glass-card rounded-full flex items-center gap-2 border border-white/20 z-10 map-marker-node cursor-pointer transition-transform hover:scale-105";
+      
+      let dotColor = "bg-green-400";
+      if (cat.name.includes("Very Unhealthy") || cat.name === "Hazardous") dotColor = "bg-purple-500";
+      else if (cat.name === "Unhealthy") dotColor = "bg-red-400";
+      else if (cat.name.includes("Sensitive Groups")) dotColor = "bg-orange-400";
+      else if (cat.name === "Moderate") dotColor = "bg-yellow-400";
+
+      marker.innerHTML = `
+        <span class="w-3 h-3 rounded-full ${dotColor}"></span>
+        <span class="text-label-sm font-bold">${cityName}: ${city.aqi}</span>
+      `;
+      
+      marker.addEventListener('click', () => {
+        currentCity = cityName;
+        const selector = document.getElementById('city-select');
+        if (selector) selector.value = currentCity;
+        updateCityData();
+      });
+
+      container.appendChild(marker);
+    });
+  }
+
+  function renderNotificationsTable() {
+    if (!appData || !appData.recentAlerts) return;
+    const tbody = document.getElementById('recent-dispatch-tbody');
+    tbody.innerHTML = '';
+    
+    // Load custom alerts from localStorage and prepend to table
+    const customAlerts = JSON.parse(localStorage.getItem('smognet_custom_alerts') || '[]');
+    const allAlerts = [...customAlerts, ...appData.recentAlerts];
+    
+    allAlerts.forEach(alert => {
+      const isWhatsApp = alert.channel === "WhatsApp";
+      const channelIcon = isWhatsApp ? "forum" : "sms";
+      const channelName = isWhatsApp ? "WhatsApp" : "SMS";
+      const channelColor = isWhatsApp ? "text-green-400" : "text-blue-400";
+      
+      let statusHTML = '';
+      if (alert.status === "Delivered") {
+        statusHTML = `
+          <span class="flex items-center gap-1 text-primary text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span> Delivered
+          </span>
+        `;
+      } else if (alert.status === "Pending") {
+        statusHTML = `
+          <span class="flex items-center gap-1 text-on-surface-variant/60 text-[11px] font-bold animate-pulse">
+            <span class="material-symbols-outlined text-[14px]">sync</span> Pending
+          </span>
+        `;
+      } else {
+        statusHTML = `
+          <span class="flex items-center gap-1 text-error text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[14px]">error</span> Failed
+          </span>
+        `;
+      }
+
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-white/5 transition-colors";
+      tr.innerHTML = `
+        <td class="py-4 text-label-md">${alert.time}</td>
+        <td class="py-4 font-bold">${alert.city}</td>
+        <td class="py-4"><span class="px-2 py-0.5 rounded bg-on-surface-variant/10 text-[10px]">${alert.source}</span></td>
+        <td class="py-4 text-on-surface-variant">${alert.recipients}</td>
+        <td class="py-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm ${channelColor}">${channelIcon}</span> ${channelName}
+        </td>
+        <td class="py-4">${statusHTML}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function handleBroadcastRedirect(channel) {
+    if (!appData) return;
+    const cityInfo = appData.cities[currentCity];
+    const msg = encodeURIComponent(cityInfo.aiAlert.message);
+    window.location.href = `index.html?message=${msg}&city=${currentCity}`;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    
+    // Attach broadcast button listeners
+    const btnWhatsApp = document.querySelector('button[onclick*="WhatsApp"]');
+    if (btnWhatsApp) {
+      btnWhatsApp.removeAttribute('onclick');
+      btnWhatsApp.addEventListener('click', () => handleBroadcastRedirect('whatsapp'));
+    }
+    
+    const btnSMS = document.querySelector('button[onclick*="SMS"]');
+    if (btnSMS) {
+      btnSMS.removeAttribute('onclick');
+      btnSMS.addEventListener('click', () => handleBroadcastRedirect('sms'));
+    }
+  });
+  </script>
+</body></html>

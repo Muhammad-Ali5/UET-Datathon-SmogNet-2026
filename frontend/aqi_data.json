@@ -1,0 +1,537 @@
+{
+  "cities": {
+    "Islamabad": {
+      "aqi": 74,
+      "status": "Moderate",
+      "updated": "Live API 02:51 PM",
+      "pollutants": {
+        "pm25": 23,
+        "pm10": 48,
+        "no2": 2,
+        "o3": 138,
+        "so2": 3,
+        "co": 194,
+        "nh3": 6,
+        "no": 0
+      },
+      "activeSpikes": 23,
+      "alertsToday": 46,
+      "deliveredAlerts": 41,
+      "failedAlerts": 5,
+      "dominantPollutant": "PM2.5",
+      "dominantValue": "23 \u00b5g/m\u00b3",
+      "dominantStatus": "Elevated",
+      "trends24h": {
+        "labels": [
+          "00:00",
+          "04:00",
+          "08:00",
+          "12:00",
+          "16:00",
+          "20:00",
+          "23:00"
+        ],
+        "pm25": [
+          338,
+          398,
+          145,
+          283,
+          452,
+          423,
+          23
+        ],
+        "no2": [
+          186,
+          156,
+          57,
+          175,
+          208,
+          230,
+          2
+        ],
+        "o3": [
+          0,
+          5,
+          130,
+          11,
+          0,
+          0,
+          138
+        ]
+      },
+      "heatmap": [
+        484,
+        483,
+        467,
+        449,
+        433,
+        408,
+        74
+      ],
+      "anomalies": [
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "High",
+          "location": "Blue Area",
+          "time": "10:00 PM"
+        },
+        {
+          "icon": "\ud83d\ude97",
+          "title": "Vehicular Traffic",
+          "level": "High",
+          "location": "Sector F-6",
+          "time": "09:00 PM"
+        },
+        {
+          "icon": "\ud83d\ude97",
+          "title": "Vehicular Traffic",
+          "level": "High",
+          "location": "I-9 Industrial Zone",
+          "time": "08:00 PM"
+        }
+      ],
+      "sourceDistribution": {
+        "industrial": 33,
+        "agricultural": 34,
+        "vehicular": 33
+      },
+      "aiAlert": {
+        "title": "Islamabad: Mixed Pollution surge detected.",
+        "message": "Air quality index remains in the safe zone. Atmospheric parameters comply with WHO limits. No safety masks needed."
+      },
+      "mapCoord": {
+        "top": "15%",
+        "left": "60%"
+      }
+    },
+    "Karachi": {
+      "aqi": 73,
+      "status": "Moderate",
+      "updated": "Live API 02:51 PM",
+      "pollutants": {
+        "pm25": 17,
+        "pm10": 99,
+        "no2": 0,
+        "o3": 47,
+        "so2": 0,
+        "co": 87,
+        "nh3": 0,
+        "no": 0
+      },
+      "activeSpikes": 23,
+      "alertsToday": 46,
+      "deliveredAlerts": 41,
+      "failedAlerts": 5,
+      "dominantPollutant": "PM10",
+      "dominantValue": "99 \u00b5g/m\u00b3",
+      "dominantStatus": "Elevated",
+      "trends24h": {
+        "labels": [
+          "00:00",
+          "04:00",
+          "08:00",
+          "12:00",
+          "16:00",
+          "20:00",
+          "23:00"
+        ],
+        "pm25": [
+          147,
+          255,
+          130,
+          190,
+          504,
+          191,
+          17
+        ],
+        "no2": [
+          34,
+          122,
+          65,
+          156,
+          244,
+          85,
+          0
+        ],
+        "o3": [
+          57,
+          13,
+          117,
+          54,
+          0,
+          8,
+          47
+        ]
+      },
+      "heatmap": [
+        500,
+        453,
+        325,
+        241,
+        199,
+        190,
+        73
+      ],
+      "anomalies": [
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "Medium",
+          "location": "Kemari Port",
+          "time": "10:00 PM"
+        },
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "Medium",
+          "location": "Clifton District",
+          "time": "09:00 PM"
+        },
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Industrial Emissions",
+          "level": "High",
+          "location": "S.I.T.E. Industrial Area",
+          "time": "08:00 PM"
+        }
+      ],
+      "sourceDistribution": {
+        "industrial": 33,
+        "agricultural": 34,
+        "vehicular": 33
+      },
+      "aiAlert": {
+        "title": "Karachi: Dust Storm suspension surge detected.",
+        "message": "Air quality index remains in the safe zone. Atmospheric parameters comply with WHO limits. No safety masks needed."
+      },
+      "mapCoord": {
+        "top": "75%",
+        "left": "33%"
+      }
+    },
+    "Lahore": {
+      "aqi": 110,
+      "status": "Unhealthy for Sensitive Groups",
+      "updated": "Live API 02:51 PM",
+      "pollutants": {
+        "pm25": 39,
+        "pm10": 91,
+        "no2": 1,
+        "o3": 146,
+        "so2": 5,
+        "co": 197,
+        "nh3": 9,
+        "no": 0
+      },
+      "activeSpikes": 23,
+      "alertsToday": 46,
+      "deliveredAlerts": 41,
+      "failedAlerts": 5,
+      "dominantPollutant": "PM2.5",
+      "dominantValue": "39 \u00b5g/m\u00b3",
+      "dominantStatus": "Elevated",
+      "trends24h": {
+        "labels": [
+          "00:00",
+          "04:00",
+          "08:00",
+          "12:00",
+          "16:00",
+          "20:00",
+          "23:00"
+        ],
+        "pm25": [
+          392,
+          531,
+          394,
+          477,
+          718,
+          514,
+          39
+        ],
+        "no2": [
+          54,
+          59,
+          117,
+          184,
+          170,
+          96,
+          1
+        ],
+        "o3": [
+          0,
+          0,
+          73,
+          15,
+          0,
+          0,
+          146
+        ]
+      },
+      "heatmap": [
+        500,
+        500,
+        500,
+        500,
+        474,
+        455,
+        110
+      ],
+      "anomalies": [
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "High",
+          "location": "Gulberg Zone",
+          "time": "10:00 PM"
+        },
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "High",
+          "location": "Walled City",
+          "time": "09:00 PM"
+        },
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "High",
+          "location": "North Industrial Area",
+          "time": "08:00 PM"
+        }
+      ],
+      "sourceDistribution": {
+        "industrial": 38,
+        "agricultural": 33,
+        "vehicular": 29
+      },
+      "aiAlert": {
+        "title": "Lahore: Mixed Pollution surge detected.",
+        "message": "Air quality index remains in the safe zone. Atmospheric parameters comply with WHO limits. No safety masks needed."
+      },
+      "mapCoord": {
+        "top": "25%",
+        "left": "52%"
+      }
+    },
+    "Peshawar": {
+      "aqi": 56,
+      "status": "Moderate",
+      "updated": "Live API 02:51 PM",
+      "pollutants": {
+        "pm25": 15,
+        "pm10": 35,
+        "no2": 1,
+        "o3": 120,
+        "so2": 1,
+        "co": 159,
+        "nh3": 7,
+        "no": 0
+      },
+      "activeSpikes": 23,
+      "alertsToday": 46,
+      "deliveredAlerts": 41,
+      "failedAlerts": 5,
+      "dominantPollutant": "O3",
+      "dominantValue": "120 \u00b5g/m\u00b3",
+      "dominantStatus": "Elevated",
+      "trends24h": {
+        "labels": [
+          "00:00",
+          "04:00",
+          "08:00",
+          "12:00",
+          "16:00",
+          "20:00",
+          "23:00"
+        ],
+        "pm25": [
+          198,
+          250,
+          301,
+          423,
+          697,
+          722,
+          15
+        ],
+        "no2": [
+          67,
+          104,
+          66,
+          145,
+          222,
+          293,
+          1
+        ],
+        "o3": [
+          21,
+          2,
+          195,
+          140,
+          2,
+          0,
+          120
+        ]
+      },
+      "heatmap": [
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        56
+      ],
+      "anomalies": [
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "High",
+          "location": "Hayatabad Ring Rd",
+          "time": "10:00 PM"
+        },
+        {
+          "icon": "\ud83c\udf3e",
+          "title": "Crop Burning",
+          "level": "High",
+          "location": "Karkhano Market",
+          "time": "09:00 PM"
+        },
+        {
+          "icon": "\ud83c\udf3e",
+          "title": "Crop Burning",
+          "level": "High",
+          "location": "Peshawar Cantt",
+          "time": "08:00 PM"
+        }
+      ],
+      "sourceDistribution": {
+        "industrial": 33,
+        "agricultural": 34,
+        "vehicular": 33
+      },
+      "aiAlert": {
+        "title": "Peshawar: Mixed Pollution surge detected.",
+        "message": "Air quality index remains in the safe zone. Atmospheric parameters comply with WHO limits. No safety masks needed."
+      },
+      "mapCoord": {
+        "top": "16%",
+        "left": "50%"
+      }
+    },
+    "Quetta": {
+      "aqi": 103,
+      "status": "Unhealthy for Sensitive Groups",
+      "updated": "Live API 02:51 PM",
+      "pollutants": {
+        "pm25": 34,
+        "pm10": 159,
+        "no2": 0,
+        "o3": 89,
+        "so2": 1,
+        "co": 87,
+        "nh3": 0,
+        "no": 0
+      },
+      "activeSpikes": 15,
+      "alertsToday": 30,
+      "deliveredAlerts": 27,
+      "failedAlerts": 3,
+      "dominantPollutant": "PM10",
+      "dominantValue": "159 \u00b5g/m\u00b3",
+      "dominantStatus": "Toxic",
+      "trends24h": {
+        "labels": [
+          "00:00",
+          "04:00",
+          "08:00",
+          "12:00",
+          "16:00",
+          "20:00",
+          "23:00"
+        ],
+        "pm25": [
+          69,
+          87,
+          12,
+          16,
+          91,
+          84,
+          34
+        ],
+        "no2": [
+          23,
+          53,
+          3,
+          5,
+          55,
+          42,
+          0
+        ],
+        "o3": [
+          78,
+          47,
+          97,
+          93,
+          41,
+          49,
+          89
+        ]
+      },
+      "heatmap": [
+        176,
+        177,
+        171,
+        166,
+        161,
+        157,
+        103
+      ],
+      "anomalies": [
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "Medium",
+          "location": "Cantonment Area",
+          "time": "10:00 PM"
+        },
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "Medium",
+          "location": "Jinnah Road Hub",
+          "time": "09:00 PM"
+        },
+        {
+          "icon": "\ud83c\udfed",
+          "title": "Mixed Pollution",
+          "level": "Medium",
+          "location": "Sariab Road District",
+          "time": "08:00 PM"
+        }
+      ],
+      "sourceDistribution": {
+        "industrial": 33,
+        "agricultural": 34,
+        "vehicular": 33
+      },
+      "aiAlert": {
+        "title": "Quetta: Dust Storm suspension surge detected.",
+        "message": "Air quality index remains in the safe zone. Atmospheric parameters comply with WHO limits. No safety masks needed."
+      },
+      "mapCoord": {
+        "top": "48%",
+        "left": "28%"
+      }
+    }
+  },
+  "recentAlerts": [
+    {
+      "status": "Delivered",
+      "time": "1 hour ago",
+      "message": "Air Quality Advisory: Ambient atmospheric indices stable across major cities.",
+      "recipient": "+923109661075"
+    }
+  ]
+}

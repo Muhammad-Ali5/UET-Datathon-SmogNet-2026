@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmogNet — AI Health Assistant</title>
+    <meta name="description" content="SmogNet AI Doctor — Ask about Pakistan air quality, smog health risks, medications, and real-time AQI guidance powered by Groq LLaMA 3.3.">
+    <link rel="icon" href="data:,">
+    
+    <!-- Core Tailwind Stylesheet -->
+    <link href="dist/output.css" rel="stylesheet"/>
+    
+    <!-- Google Fonts & Material Symbols (CRITICAL: Fixes missing icon overlaps and standardizes fonts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <style>
+        body { 
+            background-color: #0A1220; 
+            color: #e0e3e5; 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            min-height: 100vh;
+        }
+
+        /* Frosted glass cards */
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Material Icons Core Adjustment */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(72, 241, 240, 0.25); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(72, 241, 240, 0.5); }
+
+        /* Premium Chat Bubbles */
+        .bubble-user {
+            background: linear-gradient(135deg, rgba(72, 241, 240, 0.15), rgba(72, 241, 240, 0.05));
+            border: 1px solid rgba(72, 241, 240, 0.2);
+            border-radius: 18px 18px 4px 18px;
+            box-shadow: 0 4px 15px rgba(72, 241, 240, 0.03);
+        }
+        .bubble-bot {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px 18px 18px 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Typing dots animation */
+        .dot { 
+            display: inline-block; 
+            width: 6px; 
+            height: 6px; 
+            border-radius: 50%; 
+            background: #48f1f0; 
+            margin: 0 2.5px; 
+            animation: dotbounce 1.2s infinite; 
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotbounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+            40% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Particle overlay background */
+        .particles-overlay { 
+            position: fixed; 
+            inset: 0; 
+            pointer-events: none; 
+            z-index: 0; 
+            opacity: 0.4; 
+        }
+
+        /* Suggestion Chips */
+        .chip {
+            background: rgba(72, 241, 240, 0.05);
+            border: 1px solid rgba(72, 241, 240, 0.18);
+            border-radius: 9999px;
+            padding: 6px 16px;
+            font-size: 12px;
+            color: #48f1f0;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+        .chip:hover {
+            background: rgba(72, 241, 240, 0.15);
+            border-color: rgba(72, 241, 240, 0.4);
+            transform: translateY(-1.5px);
+            box-shadow: 0 0 12px rgba(72, 241, 240, 0.15);
+        }
+
+        /* Bot Content Markdown Styling */
+        .bot-content strong { color: #48f1f0; font-weight: 700; }
+        .bot-content em { color: #a3e8e8; font-style: normal; font-weight: 500; }
+        .bot-content ul { list-style: disc; padding-left: 1.25rem; margin: 8px 0; }
+        .bot-content li { margin: 4px 0; }
+        .bot-content h3, .bot-content h4 { color: #48f1f0; font-weight: 600; margin: 12px 0 6px; }
+        .bot-content p { margin-bottom: 8px; line-height: 1.6; }
+        .bot-content p:last-child { margin-bottom: 0; }
+        .bot-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .bot-content th, .bot-content td {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .bot-content th {
+            background: rgba(72, 241, 240, 0.1);
+            color: #48f1f0;
+            font-weight: 600;
+        }
+
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        textarea:focus { outline: none; }
+        textarea { resize: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Calm Ambient Rising Particles -->
+    <canvas class="particles-overlay" id="particles-canvas"></canvas>
+
+    <!-- Moving Neon Glow Background Blurs -->
+    <div class="fixed top-[15%] left-[5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-cyan-500/5 to-transparent blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[15%] right-[5%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-br from-emerald-500/5 to-transparent blur-[120px] pointer-events-none z-0"></div>
+
+    <!-- NAVBAR -->
+    <header class="bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 border-b border-white/10 shadow-lg relative w-full">
+        <div class="max-w-container-max mx-auto px-margin-desktop py-4 flex justify-between items-center w-full">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-primary rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary font-bold text-xl">cloud</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-primary bg-clip-text text-transparent tracking-tight leading-none">SmogNet</span>
+                    <span class="text-[9px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Predictive AI Systems</span>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-8">
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="index.html">Predictor Simulator</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="smognet_intelligence_dashboard.html">City Monitor</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="dashboard.html">Dashboard 🇵🇰</a>
+                <a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md font-label-md flex items-center gap-1.5" href="chatbot.html">
+                    <span class="material-symbols-outlined text-base" style="font-size:16px">smart_toy</span>
+                    AI Assistant
+                </a>
+            </nav>
+
+            <div class="flex items-center gap-2 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/10 transition-all" id="server-badge-container">
+                <span class="text-cyan-400 text-xs font-semibold flex items-center gap-1.5" id="groq-status">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>Checking Service...
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-container-max w-full mx-auto px-margin-desktop py-6 relative z-10 flex gap-6">
+
+        <!-- LEFT SIDEBAR -->
+        <aside class="hidden lg:flex flex-col gap-4 w-72 shrink-0">
+
+            <!-- AI Info Card -->
+            <div class="glass-card rounded-2xl p-5 border border-white/8 hover:border-white/12">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/20 to-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary text-xl">psychology</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-sm text-on-surface leading-tight">SmogNet AI Doctor</p>
+                        <p class="text-xs text-on-surface-variant">Groq · LLaMA 3.3 70B</p>
+                    </div>
+                </div>
+                <p class="text-xs text-on-surface-variant leading-relaxed">Specialized in Pakistan air quality, smog health risks, AQI interpretation, and protective measures. Dataset: Aug 2021 – Dec 2024.</p>
+            </div>
+
+            <!-- DYNAMIC LIVE CITY MONITORS (Feeds dynamic data from aqi_data.json) -->
+            <div class="glass-card rounded-2xl p-5 border border-white/8">
+                <div class="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                    <h3 class="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-sm animate-pulse">sensors</span>
+                        Live City Levels
+                    </h3>
+                    <span class="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-400/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">PAKISTAN</span>
+                </div>
+                <div class="space-y-2" id="live-city-list">
+                    <div class="animate-pulse text-xs text-on-surface-variant py-4 text-center">Loading real-time monitors...</div>
+                </div>
+            </div>
+
+            <!-- Quick AQI Reference -->
+            <div class="glass-card rounded-2xl p-5 border border-white/8 text-xs">
+                <h3 class="font-bold text-on-surface uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xs text-primary">analytics</span>
+                    AQI Scale Reference
+                </h3>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between items-center"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/55"></span>Good</span><span class="text-on-surface-variant font-mono">0–50</span></div>
+                    <div class="flex justify-between items-center"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-sm shadow-yellow-400/55"></span>Moderate</span><span class="text-on-surface-variant font-mono">51–100</span></div>
+                    <div class="flex justify-between items-center"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-orange-400 shadow-sm shadow-orange-400/55"></span>Sensitive Groups</span><span class="text-on-surface-variant font-mono">101–150</span></div>
+                    <div class="flex justify-between items-center"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500/55"></span>Unhealthy</span><span class="text-on-surface-variant font-mono">151–200</span></div>
+                    <div class="flex justify-between items-center"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/55"></span>Very Unhealthy</span><span class="text-on-surface-variant font-mono">201–300</span></div>
+                    <div class="flex justify-between items-center"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-900 shadow-sm shadow-rose-900/55"></span>Hazardous</span><span class="text-on-surface-variant font-mono">301+</span></div>
+                </div>
+            </div>
+
+            <!-- Clear Chat -->
+            <button onclick="clearChat()" class="w-full glass-card rounded-xl py-2.5 text-xs text-red-400 border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span> Clear Conversation
+            </button>
+        </aside>
+
+        <!-- CHAT AREA -->
+        <div class="flex-1 flex flex-col min-h-0">
+            <!-- Chat Header -->
+            <div class="glass-card rounded-2xl border border-white/8 p-4 mb-4 flex items-center gap-4 hover:border-white/12">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400/20 to-primary/20 border border-primary/30 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/5">
+                    <span class="material-symbols-outlined text-primary text-2xl">smart_toy</span>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-on-surface">SmogNet AI Health Assistant</h1>
+                    <p class="text-xs text-on-surface-variant leading-tight">Empathetic medical guidance, smog health risks, medications & protective actions in Pakistan</p>
+                </div>
+                <div class="ml-auto hidden sm:flex items-center gap-1.5 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/20 shadow-sm" id="chat-header-status">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-emerald-400 text-[10px] font-semibold tracking-wider uppercase">Active</span>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto space-y-4 pr-2 mb-4" style="min-height: 380px; max-height: 55vh;">
+
+                <!-- Welcome Message -->
+                <div class="flex gap-3 items-start" id="welcome-msg">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-cyan-400/10 border border-primary/30 flex items-center justify-center shrink-0 mt-1 shadow">
+                        <span class="material-symbols-outlined text-primary text-sm">smart_toy</span>
+                    </div>
+                    <div class="bubble-bot px-4 py-3.5 max-w-2xl text-sm leading-relaxed text-on-surface">
+                        <p class="font-semibold text-primary mb-2 flex items-center gap-1.5">
+                            <span>👋 Welcome! I'm SmogNet AI — your Pakistan air quality health assistant.</span>
+                        </p>
+                        <p class="text-on-surface-variant text-xs mb-3">I can provide expert guidance on:</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
+                            <div class="bg-white/5 rounded-lg p-2.5 flex items-start gap-2.5 border border-white/5 hover:border-primary/20 transition-all">
+                                <span class="material-symbols-outlined text-primary text-base shrink-0 mt-0.5">masks</span>
+                                <span>Health protection & masks</span>
+                            </div>
+                            <div class="bg-white/5 rounded-lg p-2.5 flex items-start gap-2.5 border border-white/5 hover:border-primary/20 transition-all">
+                                <span class="material-symbols-outlined text-primary text-base shrink-0 mt-0.5">medication</span>
+                                <span>Smog medications & remedies</span>
+                            </div>
+                            <div class="bg-white/5 rounded-lg p-2.5 flex items-start gap-2.5 border border-white/5 hover:border-primary/20 transition-all">
+                                <span class="material-symbols-outlined text-primary text-base shrink-0 mt-0.5">monitoring</span>
+                                <span>AQI interpretation & risks</span>
+                            </div>
+                            <div class="bg-white/5 rounded-lg p-2.5 flex items-start gap-2.5 border border-white/5 hover:border-primary/20 transition-all">
+                                <span class="material-symbols-outlined text-primary text-base shrink-0 mt-0.5">location_city</span>
+                                <span>City-specific pollution data</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-on-surface-variant/80">Ask me anything about smog, air quality, or health protection in Pakistan! <span class="italic text-cyan-400 font-medium">Or click a city in the sidebar to run an instant diagnostic.</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div id="suggestion-chips" class="flex flex-wrap gap-2 mb-3">
+                <button class="chip" onclick="useSuggestion(this.textContent)">Is it safe to go outside in Lahore?</button>
+                <button class="chip" onclick="useSuggestion(this.textContent)">What medicines help during smog?</button>
+                <button class="chip" onclick="useSuggestion(this.textContent)">How to protect kids from air pollution?</button>
+                <button class="chip" onclick="useSuggestion(this.textContent)">What does PM2.5 level 200 mean?</button>
+                <button class="chip" onclick="useSuggestion(this.textContent)">Best N95 masks in Pakistan?</button>
+                <button class="chip" onclick="useSuggestion(this.textContent)">Symptoms of smog-related illness?</button>
+            </div>
+
+            <!-- Input Area -->
+            <div class="glass-card rounded-2xl border border-white/8 p-3 flex items-end gap-3 hover:border-white/12 transition-all">
+                <div class="flex-1">
+                    <textarea
+                        id="chat-input"
+                        placeholder="Ask about air quality, health risks, medications, prevention..."
+                        rows="2"
+                        class="w-full bg-transparent text-on-surface placeholder-on-surface-variant/40 text-sm leading-relaxed focus:outline-none"
+                        onkeydown="handleKey(event)"
+                    ></textarea>
+                </div>
+                <button
+                    id="send-btn"
+                    onclick="sendMessage()"
+                    class="send-btn w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                >
+                    <span class="material-symbols-outlined text-base">send</span>
+                </button>
+            </div>
+            <p class="text-[10px] text-on-surface-variant/50 text-center mt-2.5">
+                🛡️ SmogNet AI is a dedicated public safety resource. Protecting vulnerable lungs across Pakistan.
+            </p>
+        </div>
+    </main>
+
+    <!-- PARTICLES & Mist animation script -->
+    <script>
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() { 
+            canvas.width = window.innerWidth; 
+            canvas.height = window.innerHeight; 
+        }
+        resizeCanvas(); 
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.reset();
+                // Random starting y positions on initialize
+                this.y = Math.random() * canvas.height;
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 20;
+                this.vx = (Math.random() - 0.5) * 0.15;
+                this.vy = -(Math.random() * 0.2 + 0.1); // Rise slowly upwards like ambient smog/mist
+                this.radius = Math.random() * 1.5 + 0.5;
+                this.opacity = Math.random() * 0.35 + 0.15;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width || this.y < -10) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.beginPath(); 
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(72, 241, 240, ${this.opacity})`; 
+                ctx.fill();
+            }
+        }
+
+        // Initialize particles
+        for (let i = 0; i < 50; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+    </script>
+
+    <!-- CHATBOT LOGIC -->
+    <script>
+        const getApiUrl = (endpoint) => {
+            if (window.location.protocol === 'file:') {
+                return `http://127.0.0.1:5000${endpoint}`;
+            }
+            return endpoint;
+        };
+
+        let chatHistory = [];
+        let isLoading = false;
+
+        // Sync inputs & keys
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function useSuggestion(text) {
+            document.getElementById('chat-input').value = text.trim();
+            // Hide chips after first use
+            document.getElementById('suggestion-chips').style.display = 'none';
+            sendMessage();
+        }
+
+        function clearChat() {
+            chatHistory = [];
+            const container = document.getElementById('chat-messages');
+            // Remove everything except the welcome message
+            const msgs = container.querySelectorAll('.msg-bubble');
+            msgs.forEach(m => {
+                if (m.id !== 'welcome-msg') m.remove();
+            });
+            document.getElementById('suggestion-chips').style.display = 'flex';
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-messages');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Copy bot content helper
+        function copyToClipboard(elementId, btn) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const textToCopy = el.innerText || el.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    icon.textContent = 'check';
+                    icon.classList.add('text-emerald-400');
+                    btn.classList.add('border-emerald-500/30', 'bg-emerald-500/10');
+                    setTimeout(() => {
+                        icon.textContent = 'content_copy';
+                        icon.classList.remove('text-emerald-400');
+                        btn.classList.remove('border-emerald-500/30', 'bg-emerald-500/10');
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error("Failed to copy text:", err);
+            });
+        }
+
+        // Pre-fill prompt on sidebar city click
+        function askAboutCity(cityName) {
+            const input = document.getElementById('chat-input');
+            input.value = `How is the current air quality in ${cityName}? What health precautions are recommended?`;
+            input.focus();
+            
+            // Subtle container flash feedback
+            const containerCard = input.closest('.glass-card');
+            if (containerCard) {
+                containerCard.classList.add('border-primary/50', 'shadow-lg', 'shadow-primary/10');
+                setTimeout(() => {
+                    containerCard.classList.remove('border-primary/50', 'shadow-lg', 'shadow-primary/10');
+                }, 1000);
+            }
+        }
+
+        function appendUserBubble(text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'flex gap-3 items-start justify-end msg-bubble';
+            div.innerHTML = `
+                <div class="bubble-user px-4 py-3 max-w-xl text-sm leading-relaxed text-on-surface">
+                    ${escapeHtml(text)}
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-on-surface/10 border border-white/10 flex items-center justify-center shrink-0 mt-1">
+                    <span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
+                </div>
+            `;
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendTypingIndicator() {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.id = 'typing-indicator';
+            div.className = 'flex gap-3 items-start msg-bubble';
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-cyan-400/10 border border-primary/30 flex items-center justify-center shrink-0 mt-1">
+                    <span class="material-symbols-outlined text-primary text-sm">smart_toy</span>
+                </div>
+                <div class="bubble-bot px-4 py-3 text-sm flex items-center gap-1">
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                </div>
+            `;
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        function formatBotResponse(text) {
+            // Simple markdown formatting helper
+            return text
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/^### (.+)$/gm, '<h4 class="text-primary font-bold text-sm mt-3 mb-1.5 flex items-center gap-1">$1</h4>')
+                .replace(/^## (.+)$/gm, '<h3 class="text-primary font-bold text-sm mt-4 mb-2 flex items-center gap-1">$1</h3>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>[\n]*)+/g, '<ul>$&</ul>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/^(?!<[hul])(.+)$/gm, '<p>$1</p>');
+        }
+
+        function appendBotBubble(text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'flex gap-3 items-start msg-bubble group relative';
+            
+            const msgId = 'bot-msg-' + Math.random().toString(36).substr(2, 9);
+            
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-cyan-400/10 border border-primary/30 flex items-center justify-center shrink-0 mt-1 shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-sm">smart_toy</span>
+                </div>
+                <div class="bubble-bot px-4 py-3 max-w-2xl text-sm leading-relaxed text-on-surface bot-content relative">
+                    <div id="${msgId}">
+                        ${formatBotResponse(text)}
+                    </div>
+                    <button onclick="copyToClipboard('${msgId}', this)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded bg-slate-900/60 hover:bg-slate-900/90 text-on-surface-variant hover:text-white border border-white/5 shadow-sm" title="Copy response">
+                        <span class="material-symbols-outlined text-xs" style="font-size: 14px">content_copy</span>
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function sendMessage() {
+            if (isLoading) return;
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Hide suggestion chips
+            document.getElementById('suggestion-chips').style.display = 'none';
+
+            input.value = '';
+            input.rows = 2;
+
+            appendUserBubble(text);
+            chatHistory.push({ role: 'user', content: text });
+
+            isLoading = true;
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            appendTypingIndicator();
+
+            try {
+                const response = await fetch(getApiUrl('/api/chat'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+
+                removeTypingIndicator();
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    appendBotBubble(`❌ ${err.error || 'Server error. Make sure the SmogNet backend is running.'}`);
+                    chatHistory.pop();
+                } else {
+                    const data = await response.json();
+                    const reply = data.reply || '⚠️ No response received.';
+                    chatHistory.push({ role: 'assistant', content: reply });
+                    appendBotBubble(reply);
+                }
+            } catch (err) {
+                removeTypingIndicator();
+                appendBotBubble(`❌ Could not reach SmogNet backend. Make sure the Flask server is running at http://127.0.0.1:5000 and try again.`);
+                chatHistory.pop();
+            } finally {
+                isLoading = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        // DYNAMIC CONTENT HYDRATION (Feeds sidebar from real-time dataset)
+        async function fetchLiveCityMonitors() {
+            const listEl = document.getElementById('live-city-list');
+            try {
+                const response = await fetch(getApiUrl('/aqi_data.json'));
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                
+                listEl.innerHTML = '';
+                const cityNames = Object.keys(data.cities);
+                
+                cityNames.forEach(cityName => {
+                    const city = data.cities[cityName];
+                    const aqi = city.aqi;
+                    
+                    let dotColor = 'bg-emerald-400';
+                    let textClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+                    
+                    if (aqi > 300) {
+                        dotColor = 'bg-rose-900';
+                        textClass = 'text-rose-400 bg-rose-950/20 border-rose-900/30';
+                    } else if (aqi > 200) {
+                        dotColor = 'bg-purple-500';
+                        textClass = 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+                    } else if (aqi > 150) {
+                        dotColor = 'bg-red-500';
+                        textClass = 'text-red-400 bg-red-500/10 border-red-500/20';
+                    } else if (aqi > 100) {
+                        dotColor = 'bg-orange-400';
+                        textClass = 'text-orange-400 bg-orange-500/10 border-orange-500/20';
+                    } else if (aqi > 50) {
+                        dotColor = 'bg-yellow-400';
+                        textClass = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+                    }
+                    
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center bg-white/5 border border-white/5 hover:border-primary/30 hover:bg-white/10 p-2.5 rounded-xl transition-all cursor-pointer group';
+                    div.title = `Click to ask AI about ${cityName}'s current health recommendations.`;
+                    div.onclick = () => askAboutCity(cityName);
+                    
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="${dotColor} w-2 h-2 rounded-full group-hover:scale-125 transition-transform"></span>
+                            <span class="text-xs font-semibold text-white group-hover:text-primary transition-colors">${cityName}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[9px] text-on-surface-variant font-medium">${city.dominantPollutant}</span>
+                            <span class="px-1.5 py-0.5 text-[11px] font-bold font-mono rounded border ${textClass}">${aqi}</span>
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                });
+            } catch (err) {
+                console.error("Failed to load dynamic city monitors:", err);
+                listEl.innerHTML = `<div class="text-[10px] text-yellow-500/70 text-center py-2">⚠️ Could not stream dataset. Using local simulations.</div>`;
+            }
+        }
+
+        // Live connection check
+        async function checkBackendHealth() {
+            const statusBadge = document.getElementById('groq-status');
+            const headerBadge = document.getElementById('server-badge-container');
+            const greenPill = document.getElementById('chat-header-status');
+            
+            try {
+                const res = await fetch(getApiUrl('/api/health'));
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.model_loaded) {
+                        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> Groq LLaMA 3.3 Connected`;
+                        headerBadge.className = "flex items-center gap-2 bg-cyan-500/10 px-3.5 py-1.5 rounded-full border border-cyan-500/20 shadow-sm";
+                        if (greenPill) greenPill.className = "ml-auto hidden sm:flex items-center gap-1.5 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/20 shadow-sm";
+                    } else {
+                        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"></span> Simulation Active`;
+                        headerBadge.className = "flex items-center gap-2 bg-yellow-500/10 px-3.5 py-1.5 rounded-full border border-yellow-500/20 shadow-sm";
+                    }
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> SmogNet Offline Mode`;
+                headerBadge.className = "flex items-center gap-2 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/20 shadow-sm";
+                if (greenPill) greenPill.className = "ml-auto hidden sm:flex items-center gap-1.5 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/20 shadow-sm";
+            }
+        }
+
+        // Initial setup
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchLiveCityMonitors();
+            checkBackendHealth();
+        });
+    </script>
+</body>
+</html>
